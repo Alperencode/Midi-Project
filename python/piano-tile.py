@@ -1,5 +1,6 @@
 import pygame
 import mido
+from music21 import note,stream
 
 pygame.init()
 
@@ -23,6 +24,30 @@ pygame.display.set_caption("Python MIDI")
 # tracking time
 clock = pygame.time.Clock()
 
+# Number - note converter functions
+NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+OCTAVES = list(range(11))
+NOTES_IN_OCTAVE = len(NOTES)
+
+def note_to_number(note: str, octave: int) -> int:
+    assert note in NOTES, errors['notes']
+    assert octave in OCTAVES, errors['notes']
+
+    note = NOTES.index(note)
+    note += (NOTES_IN_OCTAVE * octave)
+
+    assert 0 <= note <= 127, errors['notes']
+
+    return note
+
+def number_to_note(number: int) -> tuple:
+    octave = number // NOTES_IN_OCTAVE
+    assert octave in OCTAVES, errors['notes']
+    assert 0 <= number <= 127, errors['notes']
+    note = NOTES[number % NOTES_IN_OCTAVE]
+
+    return [note, octave]
+
 done = False
 while done == False:
     for event in pygame.event.get():
@@ -32,7 +57,12 @@ while done == False:
     # while notes are coming in
     for msg in inport.iter_pending():
         try:
-            print(msg)
+            print(number_to_note(msg.note))
+            
+            converted_note = number_to_note(msg.note)
+            n = note.Note(str(converted_note[0]) + str(converted_note[1]))
+            
+
             n = msg.note
             x=(n-47)*10 
 
