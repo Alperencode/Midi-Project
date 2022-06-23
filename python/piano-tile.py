@@ -1,6 +1,7 @@
+from distutils import errors
 import pygame
 import mido
-from music21 import note,stream
+from music21 import *
 
 pygame.init()
 
@@ -49,6 +50,7 @@ def number_to_note(number: int) -> tuple:
     return [note, octave]
 
 done = False
+stream1 = stream.Stream()
 while done == False:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -60,9 +62,14 @@ while done == False:
             print(number_to_note(msg.note))
             
             converted_note = number_to_note(msg.note)
-            n = note.Note(str(converted_note[0]) + str(converted_note[1]))
-            
 
+            # print(type(msg.note))
+            
+            n = note.Note(str(converted_note[0]) + str(converted_note[1]))
+
+            # print(type(n))
+            stream1.append(n)
+            
             n = msg.note
             x=(n-47)*10 
 
@@ -76,7 +83,6 @@ while done == False:
         except:
             print(msg)
            
-    
     # while note list is not empty
     for i in range(len(note_list)):
         # draw note to the screen
@@ -100,4 +106,5 @@ while done == False:
     # so 1000/200 = 5
     clock.tick(200)
 
+stream1.show()
 pygame.quit()
