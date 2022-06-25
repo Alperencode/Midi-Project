@@ -106,5 +106,5 @@ while done == False:
     # so 1000/200 = 5
     clock.tick(200)
 
-stream1.show()
+stream1.show("x.pdf")
 pygame.quit()
