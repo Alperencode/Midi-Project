@@ -8,25 +8,18 @@ OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 
 output = mido.open_output('loopMIDI Port 1')
-# inport=mido.open_input()
 
-app = Tk()
-app.title("GUI Basics")
-app.geometry("600x500")
-app.resizable(False, False)
+def create_slider():
+    slider = ttk.Scale(
+        app,
+        from_=-8192,
+        to=8191,
+        orient='horizontal'
+    )
 
-# print(output)
-
-slider = ttk.Scale(
-    app,
-    from_=-8192,
-    to=8191,
-    orient='horizontal'
-)
-
-slider.set(64)
-slider.bind("<ButtonRelease-1>", lambda event: output.send( mido.Message("pitchwheel", pitch=int(slider.get()))))
-slider.pack()
+    slider.set(64)
+    slider.bind("<ButtonRelease-1>", lambda event: output.send( mido.Message("pitchwheel", pitch=int(slider.get()))))
+    slider.pack()
 
 def note_to_number(note: str, octave: int) -> int:
     # handling errors
@@ -41,7 +34,6 @@ def note_to_number(note: str, octave: int) -> int:
 
     return note
 
-
 def note_pressed(note_name):
     print(f"{note_name} pressed")
 
@@ -52,7 +44,6 @@ def note_pressed(note_name):
     output.send( mido.Message('note_on', note=note_to_number(note_name, 5), velocity=64) )
     time.sleep(0.2)
     output.send( mido.Message('note_off', note=note_to_number(note_name, 5), velocity=64) )
-
 
 def create_note_button(note_name):
     
@@ -70,11 +61,20 @@ def create_note_button(note_name):
     button.pack()
     return button
 
+def main():
+    global app
+    app = Tk()
+    app.title("GUI")
+    app.geometry("600x500")
+    app.resizable(False, False)
+    
+    create_slider()
 
-for index,item in enumerate(NOTES):
-    button = create_note_button(item)
-    button.place(x=index*50, y=300)
-    # button.pack(side=BOTTOM)
-    # button.grid(row=0, column=i)
+    for index,item in enumerate(NOTES):
+        button = create_note_button(item)
+        button.place(x=index*50, y=300)
 
-app.mainloop()
+    app.mainloop()
+
+if __name__ == "__main__":
+    main()
