@@ -1,8 +1,10 @@
+# Will implement the OOP
 from tkinter import *
 from tkinter import ttk
 from music21 import *
 import mido,random,time
 
+pure_notes = [['C',0], ['D',0], ['E',0], ['F',0], ['G',0], ['A',0], ['B',0]]
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
@@ -69,7 +71,17 @@ def main():
     app.resizable(False, False)
     
     create_slider()
-
+    counter = 0
+    for item in pure_notes:
+        counter += 1.5
+        
+        label = Label(app, text=item[0])
+        label.place(x=10, y= 10 + (counter * 20))
+        
+        entry = Entry(app, width=5)
+        entry.place(x=50, y= 10 + (counter * 20))
+        entry.bind('<Return>', lambda event: output.send( mido.Message("pitchwheel", pitch=int(entry.get()) )))
+            
     for index,item in enumerate(NOTES):
         button = create_note_button(item)
         button.place(x=index*50, y=300)
