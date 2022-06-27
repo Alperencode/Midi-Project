@@ -59,7 +59,8 @@ while done == False:
     # while notes are coming in
     for msg in inport.iter_pending():
         try:
-            print(number_to_note(msg.note))
+            # print(number_to_note(msg.note))
+            print(msg)
             
             converted_note = number_to_note(msg.note)
 
