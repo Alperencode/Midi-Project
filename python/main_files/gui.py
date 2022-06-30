@@ -8,7 +8,12 @@ NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 
-output = mido.open_output('loopMIDI Port 1')
+# output = mido.open_output('loopMIDI Port 1')
+# output = mido.open_output('MIDIOUT2 (USB2.0-MIDI)')
+outports = mido.get_output_names()
+# inport = mido.open_input()
+output = mido.open_output(outports[-2])
+
 
 class NoteButton:
     global output,app,pure_notes
@@ -92,6 +97,14 @@ def note_to_number(note: str, octave: int) -> int:
     assert 0 <= note <= 127, errors['notes']
 
     return note
+
+def number_to_note(number: int) -> tuple:
+    octave = number // NOTES_IN_OCTAVE
+    assert octave in OCTAVES, errors['notes']
+    assert 0 <= number <= 127, errors['notes']
+    note = NOTES[number % NOTES_IN_OCTAVE]
+
+    return [note, octave]
 
 def main():
     global app
