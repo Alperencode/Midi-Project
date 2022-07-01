@@ -8,23 +8,30 @@ NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 
-# output = mido.open_output('loopMIDI Port 1')
 # output = mido.open_output('MIDIOUT2 (USB2.0-MIDI)')
 outports = mido.get_output_names()
-# inport = mido.open_input()
-output = mido.open_output(outports[-2])
+inports = mido.get_input_names()
 
+inport = mido.open_input(inports[-1])
+# output = mido.open_output(outports[-1])
+output = mido.open_output('loopMIDI Port 1')
+# output = mido.open_output()
+
+print(outports)
+print(output)
+print(inport)
 
 class NoteButton:
     global output,app,pure_notes
 
     counter = 0
     label_counter = 0
-    
-    def __init__(self,note_name):
+
+    def __init__(self,note_name,octave=5):
         self.__note_name = note_name
         self.__pitch_value = 0
-        
+        self.__octave = octave
+
         button = Button(
         app,
         text=note_name,
@@ -54,6 +61,12 @@ class NoteButton:
     def get_note_name(self):
         return self.__note_name
 
+    def get_octave(self):
+        return self.__octave
+
+    def set_octave(self,octave):
+        self.__octave = octave
+
     def set_pitch(self,pitch):
         if pitch > 8191 or pitch < -8192:
             print("Incorrect pitch value")
@@ -66,11 +79,11 @@ class NoteButton:
     def send_midi(self):
         print("Sending pitch signal:", self.__pitch_value)
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
-        
+
         print("Sending note signal:", self.__note_name)
-        output.send( mido.Message('note_on', note=note_to_number(self.__note_name, 5), velocity=64) )
+        output.send( mido.Message('note_on', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
         time.sleep(0.2)
-        output.send( mido.Message('note_off', note=note_to_number(self.__note_name, 5), velocity=64) )
+        output.send( mido.Message('note_off', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
 
 
 def create_slider():
@@ -102,7 +115,7 @@ def number_to_note(number: int) -> tuple:
     octave = number // NOTES_IN_OCTAVE
     assert octave in OCTAVES, errors['notes']
     assert 0 <= number <= 127, errors['notes']
-    note = NOTES[number % NOTES_IN_OCTAVE]
+    note = NOTES[(number % NOTES_IN_OCTAVE) - 4]
 
     return [note, octave]
 
@@ -112,13 +125,26 @@ def main():
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-    
+
     create_slider()
+    button_list = []
 
     for index,item in enumerate(NOTES):
-        NoteButton(item)
-    
-    app.mainloop()
+        button_list.append(NoteButton(item))
+
+    while True:
+        for msg in inport.iter_pending():
+            try:
+                for item in button_list:
+                    note = number_to_note(msg.note)
+                    print(note)
+                    if item.get_note_name() == note[0]:
+                        item.set_octave(note[1])
+                        item.send_midi()
+            except:
+                pass
+        app.mainloop()
+
 
 if __name__ == "__main__":
     main()
