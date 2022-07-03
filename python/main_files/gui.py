@@ -1,9 +1,8 @@
 from tkinter import *
-from tkinter import ttk
 from music21 import *
+from tkinter import ttk
 import mido,random,time
 
-pure_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
@@ -22,11 +21,12 @@ print(output)
 print(inport)
 
 class NoteButton:
-    global output,app,pure_notes
+    global output,app
 
+    pure_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
     counter = 0
     label_counter = 0
-
+    
     def __init__(self,note_name,octave=5):
         self.__note_name = note_name
         self.__pitch_value = 0
@@ -35,7 +35,7 @@ class NoteButton:
         button = Button(
         app,
         text=note_name,
-        command = lambda : self.send_midi(),
+        command = self.send_midi,
         width=5,
         height=15,
         bg="white",
@@ -43,7 +43,7 @@ class NoteButton:
         font=("Arial", 10, "bold"),
         )
 
-        if note_name in pure_notes:
+        if note_name in NoteButton.pure_notes:
             NoteButton.label_counter += 1.5
 
             label = Label(app, text=note_name)
@@ -87,6 +87,7 @@ class NoteButton:
 
 
 def create_slider():
+    # Currently slider has no function
     slider = ttk.Scale(
         app,
         from_=0,
@@ -98,7 +99,7 @@ def create_slider():
     # slider.bind("<ButtonRelease-1>", lambda event: output.send( mido.Message("pitchwheel", pitch=int(slider.get()))))
     slider.pack()
 
-def note_to_number(note: str, octave: int) -> int:
+def note_to_number(note: str, octave: int):
     # handling errors
     assert note in NOTES, errors['notes']
     assert octave in OCTAVES, errors['notes']
@@ -111,12 +112,13 @@ def note_to_number(note: str, octave: int) -> int:
 
     return note
 
-def number_to_note(number: int) -> tuple:
+def number_to_note(number: int):
     octave = number // NOTES_IN_OCTAVE
     assert octave in OCTAVES, errors['notes']
     assert 0 <= number <= 127, errors['notes']
     note = NOTES[(number % NOTES_IN_OCTAVE) - 4]
 
+    # Will fix wrong octave transition   
     return [note, octave]
 
 def main():
@@ -137,6 +139,7 @@ def main():
             try:
                 for item in button_list:
                     note = number_to_note(msg.note)
+                    # Need to write note to gui program, currently writing to the terminal 
                     print(note)
                     if item.get_note_name() == note[0]:
                         item.set_octave(note[1])
