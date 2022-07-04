@@ -116,37 +116,44 @@ def number_to_note(number: int):
     octave = number // NOTES_IN_OCTAVE
     assert octave in OCTAVES, errors['notes']
     assert 0 <= number <= 127, errors['notes']
-    note = NOTES[(number % NOTES_IN_OCTAVE) - 4]
+    note = NOTES[(number % NOTES_IN_OCTAVE)]
 
-    # Will fix wrong octave transition   
     return [note, octave]
 
+def read_inport(button_list):
+    app.after(ms=10, func= lambda : read_inport(button_list))
+    
+    # if port has messages
+    if inport.poll():
+        # if message is a note message
+        if inport.receive().type == 'note_on':
+            msg = inport.receive()
+            for item in button_list:
+                note = number_to_note(msg.note)
+                # Need to write note to gui program, currently writing to the terminal 
+                if item.get_note_name() == note[0]:
+                    item.set_octave(note[1])
+                    item.send_midi()
+                    break
+    
 def main():
     global app
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-
-    create_slider()
+    
+    label = Label(app, text="Info")
+    label.pack()
+    
+    # create_slider()
     button_list = []
 
     for index,item in enumerate(NOTES):
         button_list.append(NoteButton(item))
 
-    while True:
-        for msg in inport.iter_pending():
-            try:
-                for item in button_list:
-                    note = number_to_note(msg.note)
-                    # Need to write note to gui program, currently writing to the terminal 
-                    print(note)
-                    if item.get_note_name() == note[0]:
-                        item.set_octave(note[1])
-                        item.send_midi()
-            except:
-                pass
-        app.mainloop()
+    read_inport(button_list)
+    app.mainloop()
 
 
 if __name__ == "__main__":
