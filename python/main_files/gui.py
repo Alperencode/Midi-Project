@@ -1,29 +1,27 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time,threading
+import mido,random,time,threading,math
 
-NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTES = ['G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 
-# output = mido.open_output('MIDIOUT2 (USB2.0-MIDI)')
 outports = mido.get_output_names()
 inports = mido.get_input_names()
 
+print(f"outputs: {outports}")
+print(f"inputs: {inports}")
 inport = mido.open_input(inports[-1])
-# output = mido.open_output(outports[-1])
-output = mido.open_output('loopMIDI Port 1')
-# output = mido.open_output()
+output = mido.open_output(outports[-1])
 
-print(outports)
-print(output)
-print(inport)
+print(f"output: {output}")
+print(f"inport: {inport}")
 
 class NoteButton:
     global output,app
 
-    pure_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+    pure_notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
     counter = 0
     label_counter = 0
     
@@ -77,10 +75,14 @@ class NoteButton:
         return self.__pitch_value
 
     def send_midi(self):
-        print("Sending pitch signal:", self.__pitch_value)
+        # print("Sending pitch signal:", self.__pitch_value)
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
 
-        print("Sending note signal:", self.__note_name)
+        # print("Sending note signal:", self.__note_name)
+        if len(self.__note_name) == 1:
+            Label(app, text=f"Sending {self.__note_name} octave {self.__octave} with  {self.__pitch_value} pitch",font=("Arial",15,"bold")).place(x=170, y=45)
+        else:
+            Label(app, text=f"Sending {self.__note_name} octave {self.__octave} with {self.__pitch_value} pitch",font=("Arial",15,"bold")).place(x=170, y=45)
         output.send( mido.Message('note_on', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
         time.sleep(0.2)
         output.send( mido.Message('note_off', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
@@ -100,23 +102,16 @@ def create_slider():
     slider.pack()
 
 def note_to_number(note: str, octave: int):
-    # handling errors
-    assert note in NOTES, errors['notes']
-    assert octave in OCTAVES, errors['notes']
-
-    # converting note to number
     note = NOTES.index(note)
     note += (NOTES_IN_OCTAVE * octave)
-
     assert 0 <= note <= 127, errors['notes']
 
     return note
 
 def number_to_note(number: int):
-    octave = number // NOTES_IN_OCTAVE
-    assert octave in OCTAVES, errors['notes']
-    assert 0 <= number <= 127, errors['notes']
-    note = NOTES[(number % NOTES_IN_OCTAVE)]
+    
+    note = NOTES[(number % 12)]
+    octave = math.floor((number+8)/12)
 
     return [note, octave]
 
@@ -126,7 +121,6 @@ def coming_note(msg,button_list):
             note = number_to_note(msg.note)
             # Need to write note to gui program, currently writing to the terminal 
             if item.get_note_name() == note[0]:
-                print(note)
                 item.set_octave(note[1])
                 item.send_midi()
                 break
@@ -143,7 +137,7 @@ def main():
     app.geometry("600x500")
     app.resizable(False, False)
     
-    label = Label(app, text="Info")
+    label = Label(app, text="Info", font=("Arial", 15, "bold"))
     label.pack()
     
     # create_slider()
