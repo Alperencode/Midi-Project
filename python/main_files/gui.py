@@ -1,7 +1,7 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time
+import mido,random,time,threading
 
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
@@ -120,22 +120,22 @@ def number_to_note(number: int):
 
     return [note, octave]
 
+def coming_note(msg,button_list):
+    if msg.type == 'note_on':
+        for item in button_list:
+            note = number_to_note(msg.note)
+            # Need to write note to gui program, currently writing to the terminal 
+            if item.get_note_name() == note[0]:
+                print(note)
+                item.set_octave(note[1])
+                item.send_midi()
+                break
+
 def read_inport(button_list):
-    app.after(ms=10, func= lambda : read_inport(button_list))
-    
-    # if port has messages
-    if inport.poll():
-        # if message is a note message
-        if inport.receive().type == 'note_on':
-            msg = inport.receive()
-            for item in button_list:
-                note = number_to_note(msg.note)
-                # Need to write note to gui program, currently writing to the terminal 
-                if item.get_note_name() == note[0]:
-                    item.set_octave(note[1])
-                    item.send_midi()
-                    break
-    
+    while True:
+        if inport.poll():
+            threading.Thread(target=lambda : coming_note(inport.receive(),button_list)).start()
+                
 def main():
     global app
     app = Tk()
@@ -152,8 +152,10 @@ def main():
     for index,item in enumerate(NOTES):
         button_list.append(NoteButton(item))
 
-    read_inport(button_list)
+    threading.Thread(target=lambda: read_inport(button_list)).start()
+
     app.mainloop()
+    exit()
 
 
 if __name__ == "__main__":
