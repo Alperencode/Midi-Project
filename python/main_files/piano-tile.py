@@ -2,7 +2,7 @@ from distutils import errors
 import pygame
 import mido
 from music21 import *
-
+import math
 pygame.init()
 
 # define colors
@@ -14,9 +14,16 @@ note_list = []
 note_list_off = []
 
 # define midi ports
-outport=mido.open_output()
-inport=mido.open_input()
+# output = mido.open_output('MIDIOUT2 (USB2.0-MIDI)')
+outports = mido.get_output_names()
+inports = mido.get_input_names()
 
+inport = mido.open_input(inports[-1])
+# output = mido.open_output(outports[-1])
+output = mido.open_output(outports[-1])
+# output = mido.open_output()
+print(f"input {inport}")
+print(f"output {output}")
 # setting up the screen
 SIZE = [1000, 500]
 screen = pygame.display.set_mode(SIZE)
@@ -26,26 +33,13 @@ pygame.display.set_caption("Python MIDI")
 clock = pygame.time.Clock()
 
 # Number - note converter functions
-NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+notes = ['G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G']
 OCTAVES = list(range(11))
-NOTES_IN_OCTAVE = len(NOTES)
-
-def note_to_number(note: str, octave: int) -> int:
-    assert note in NOTES, errors['notes']
-    assert octave in OCTAVES, errors['notes']
-
-    note = NOTES.index(note)
-    note += (NOTES_IN_OCTAVE * octave)
-
-    assert 0 <= note <= 127, errors['notes']
-
-    return note
+NOTES_IN_OCTAVE = len(notes)
 
 def number_to_note(number: int) -> tuple:
-    octave = number // NOTES_IN_OCTAVE
-    assert octave in OCTAVES, errors['notes']
-    assert 0 <= number <= 127, errors['notes']
-    note = NOTES[number % NOTES_IN_OCTAVE]
+    octave = math.floor((number+8)/12)
+    note = notes[number % 12]
 
     return [note, octave]
 
@@ -107,5 +101,4 @@ while done == False:
     # so 1000/200 = 5
     clock.tick(200)
 
-stream1.show("x.pdf")
 pygame.quit()
