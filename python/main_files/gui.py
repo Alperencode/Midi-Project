@@ -87,14 +87,28 @@ class NoteButton:
 
         # print("Sending note signal:", self.get_note_name())
         if len(self.get_note_name()) == 1:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
         time.sleep(0.2)
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
 
+def default_labels():
+    global app
+    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
+    info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
 
+    counter = 0
+    for i in range(8):
+        if i >= 4:
+            Button(app, text=f"{counter+4+1}", command=lambda : print("button pressed"), width=3, height=2).place(x=520, y=40+counter*50)
+            counter += 1
+        else:
+            Button(app, text=f"{i+1}", command=lambda : print("button pressed"), width=3, height=2).place(x=460, y=40+i*50)
+    
+    Button(app, text="Set", command=lambda : print("Set function"), width=5, height=1).place(x=485, y=250)
+    
 def create_slider():
     # Currently slider has no function
     slider = ttk.Scale(
@@ -144,9 +158,8 @@ def main():
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-    
-    label = Label(app, text="Info", font=("Arial", 15, "bold"))
-    label.pack()
+
+    default_labels() 
     
     # create_slider()
     button_list = []
