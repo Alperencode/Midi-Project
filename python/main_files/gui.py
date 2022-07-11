@@ -3,7 +3,7 @@ from music21 import *
 from tkinter import ttk
 import mido,random,time,threading,math
 
-NOTES = ['G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G']
+NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 
@@ -13,7 +13,7 @@ inports = mido.get_input_names()
 print(f"outputs: {outports}")
 print(f"inputs: {inports}")
 inport = mido.open_input(inports[-1])
-output = mido.open_output(outports[-1])
+output = mido.open_output(outports[-2])
 
 print(f"output: {output}")
 print(f"inport: {inport}")
@@ -21,7 +21,7 @@ print(f"inport: {inport}")
 class NoteButton:
     global output,app
 
-    pure_notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    pure_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
     counter = 0
     label_counter = 0
     
@@ -102,15 +102,14 @@ def create_slider():
     slider.pack()
 
 def note_to_number(note: str, octave: int):
-    note = NOTES.index(note)
+    note = NOTES.index(note) + 4
     note += (NOTES_IN_OCTAVE * octave)
-    assert 0 <= note <= 127, errors['notes']
 
-    return note
+    return note-16
 
 def number_to_note(number: int):
     
-    note = NOTES[(number % 12)]
+    note = NOTES[(number % 12)-4]
     octave = math.floor((number+8)/12)
 
     return [note, octave]
@@ -118,8 +117,8 @@ def number_to_note(number: int):
 def coming_note(msg,button_list):
     if msg.type == 'note_on':
         for item in button_list:
-            note = number_to_note(msg.note)
-            # Need to write note to gui program, currently writing to the terminal 
+            # this '-8' can change depending on the instrument
+            note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
                 item.set_octave(note[1])
                 item.send_midi()
@@ -127,9 +126,10 @@ def coming_note(msg,button_list):
 
 def read_inport(button_list):
     while True:
-        if inport.poll():
-            threading.Thread(target=lambda : coming_note(inport.receive(),button_list)).start()
-                
+        msg = inport.receive()
+        if msg.type == 'note_on':
+            threading.Thread(target=lambda : coming_note(msg,button_list)).start()
+
 def main():
     global app
     app = Tk()
