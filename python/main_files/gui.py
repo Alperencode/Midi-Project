@@ -94,10 +94,18 @@ class NoteButton:
         time.sleep(0.2)
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
 
+def init_set_screen():
+    set_screen = Tk()
+    set_screen.title("Set Screen")
+    set_screen.geometry("400x300")
+    set_screen.resizable(False, False)
+
+    exit_button = Button(set_screen, text="Exit", command=set_screen.destroy, width=7, height=1).pack()
+
 def default_labels():
     global app
-    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
+    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
 
     counter = 0
     for i in range(8):
@@ -106,21 +114,7 @@ def default_labels():
             counter += 1
         else:
             Button(app, text=f"{i+1}", command=lambda : print("button pressed"), width=3, height=2).place(x=460, y=40+i*50)
-    
-    Button(app, text="Set", command=lambda : print("Set function"), width=5, height=1).place(x=485, y=250)
-    
-def create_slider():
-    # Currently slider has no function
-    slider = ttk.Scale(
-        app,
-        from_=0,
-        to=100,
-        orient='horizontal'
-    )
-
-    slider.set(50)
-    # slider.bind("<ButtonRelease-1>", lambda event: output.send( mido.Message("pitchwheel", pitch=int(slider.get()))))
-    slider.pack()
+    save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=475, y=250)
 
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
@@ -161,7 +155,6 @@ def main():
 
     default_labels() 
     
-    # create_slider()
     button_list = []
 
     for index,item in enumerate(NOTES):
@@ -170,8 +163,6 @@ def main():
     threading.Thread(target=lambda: read_inport(button_list)).start()
 
     app.mainloop()
-    exit()
-
 
 if __name__ == "__main__":
     main()
