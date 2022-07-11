@@ -25,10 +25,11 @@ class NoteButton:
     counter = 0
     label_counter = 0
     
-    def __init__(self,note_name,octave=5):
+    def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
         self.__pitch_value = 0
         self.__octave = octave
+        self.__velocity = velocity
 
         button = Button(
         app,
@@ -65,6 +66,12 @@ class NoteButton:
     def set_octave(self,octave):
         self.__octave = octave
 
+    def set_velocity(self,velocity):
+        self.__velocity = velocity
+
+    def get_velocity(self):
+        return self.__velocity
+
     def set_pitch(self,pitch):
         if pitch > 8191 or pitch < -8192:
             print("Incorrect pitch value")
@@ -75,17 +82,17 @@ class NoteButton:
         return self.__pitch_value
 
     def send_midi(self):
-        # print("Sending pitch signal:", self.__pitch_value)
+        # print("Sending pitch signal:", self.get_pitch())
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
 
-        # print("Sending note signal:", self.__note_name)
-        if len(self.__note_name) == 1:
-            Label(app, text=f"Sending {self.__note_name} octave {self.__octave} with  {self.__pitch_value} pitch",font=("Arial",15,"bold")).place(x=170, y=45)
+        # print("Sending note signal:", self.get_note_name())
+        if len(self.get_note_name()) == 1:
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
         else:
-            Label(app, text=f"Sending {self.__note_name} octave {self.__octave} with {self.__pitch_value} pitch",font=("Arial",15,"bold")).place(x=170, y=45)
-        output.send( mido.Message('note_on', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
+        output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
         time.sleep(0.2)
-        output.send( mido.Message('note_off', note=note_to_number(self.__note_name, self.__octave), velocity=64) )
+        output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
 
 
 def create_slider():
@@ -121,6 +128,7 @@ def coming_note(msg,button_list):
             note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
                 item.set_octave(note[1])
+                item.set_velocity(msg.velocity)
                 item.send_midi()
                 break
 
