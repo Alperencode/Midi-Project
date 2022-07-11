@@ -1,8 +1,7 @@
-from distutils import errors
-import pygame
-import mido
+# This program created for checking midi signals and trying their attributes to develop gui.py
 from music21 import *
-import math
+import pygame,mido,math
+
 pygame.init()
 
 # define colors
@@ -14,16 +13,15 @@ note_list = []
 note_list_off = []
 
 # define midi ports
-# output = mido.open_output('MIDIOUT2 (USB2.0-MIDI)')
 outports = mido.get_output_names()
 inports = mido.get_input_names()
 
 inport = mido.open_input(inports[-1])
-# output = mido.open_output(outports[-1])
-output = mido.open_output(outports[-1])
-# output = mido.open_output()
+output = mido.open_output(outports[-2])
+
 print(f"input {inport}")
 print(f"output {output}")
+
 # setting up the screen
 SIZE = [1000, 500]
 screen = pygame.display.set_mode(SIZE)
@@ -54,7 +52,7 @@ while done == False:
     for msg in inport.iter_pending():
         try:
             # print(number_to_note(msg.note))
-            print(msg)
+            print(msg.velocity)
             
             converted_note = number_to_note(msg.note)
 
@@ -76,7 +74,9 @@ while done == False:
                 # add note to off list
                 note_list_off.append([x, 0])
         except:
-            print(msg)
+            print(msg.velocity)
+            print(number_to_note(msg.note-8))
+            print(msg.note-8)
            
     # while note list is not empty
     for i in range(len(note_list)):
@@ -85,7 +85,6 @@ while done == False:
         # note in center and 10 for radius
         pygame.draw.circle(screen, WHITE, note_list[i], 10)
         
-        # note_list is matrix?
         note_list[i][1] += 1
     
     # flipping screen so notes will come from top
