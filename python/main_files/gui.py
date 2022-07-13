@@ -7,6 +7,9 @@ NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+note_bool = True
+pitch_bool = False
+button_list = []
 
 global_pitch_list = []
 for _ in range(8):
@@ -137,7 +140,6 @@ class DefaultSetEntry:
         DefaultSetEntry.place_counter1 = 0
         DefaultSetEntry.place_counter2 = 0
 
-
 def update_pitch_list(index,pitch_values):
     global global_pitch_list
     global_pitch_list[index-1] = pitch_values
@@ -173,10 +175,46 @@ def set_default(button_list,set_number):
             button.change_enry_box()
             counter += 1
 
+def read_inport_for_pitch(catch_screen):
+    global pitch_bool,note_bool,button_list
+
+    note_bool = False
+    pitch_bool = True
+
+    pitch_text = Text(catch_screen, width=15, height=1,font=("Arial",15,"bold"))
+    pitch_text.config(state=DISABLED)
+    pitch_text.place(x=160, y=75)
+
+    while pitch_bool:
+        msg = inport.receive()
+        if msg.type == 'pitchwheel':
+            pitch_text.config(state=NORMAL)
+            pitch_text.delete(1.0, END)
+            pitch_text.insert(END,msg.pitch)
+            pitch_text.config(state=DISABLED)
+        elif msg.type == 'note_on':
+            threading.Thread(target=lambda : coming_note(msg,button_list)).start()
+
+def init_catch_screen():
+    global pitch_bool,note_bool
+
+    catch_screen = Tk()
+    catch_screen.title("Pitch Catch")
+    catch_screen.geometry("500x300")
+    catch_screen.resizable(False, False)
+
+    main_label = Label(catch_screen, text="Current Pitch",font=("Arial",20,"bold")).place(x=150, y=20)
+    threading.Thread(target=lambda: (read_inport_for_pitch(catch_screen))).start()
+
+    exit_button = Button(catch_screen, text="Exit", command=lambda : (catch_screen.destroy()), width=7, height=1).pack(side=BOTTOM)
+
+    catch_screen.mainloop()
+
 def default_labels(button_list):
     global app
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
+    pitch_catch = Button(app, text="Pitch Catch", command= lambda: init_catch_screen()).place(x=250, y=200)
 
     counter = 0
     
@@ -214,19 +252,19 @@ def coming_note(msg,button_list):
                 break
 
 def read_inport(button_list):
-    while True:
+    global note_bool
+    while note_bool:
         msg = inport.receive()
         if msg.type == 'note_on':
             threading.Thread(target=lambda : coming_note(msg,button_list)).start()
 
 def main():
-    global app
+    global app,button_list
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
 
-    button_list = []
 
     for index,item in enumerate(NOTES):
         button_list.append(NoteButton(item))
