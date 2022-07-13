@@ -6,6 +6,11 @@ import mido,random,time,threading,math
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
+PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+
+global_pitch_list = []
+for _ in range(8):
+    global_pitch_list.append([0,0,0,0,0,0,0])
 
 outports = mido.get_output_names()
 inports = mido.get_input_names()
@@ -19,9 +24,8 @@ print(f"output: {output}")
 print(f"inport: {inport}")
 
 class NoteButton:
-    global output,app
+    global output,app,PURE_NOTES
 
-    pure_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
     counter = 0
     label_counter = 0
     
@@ -30,6 +34,7 @@ class NoteButton:
         self.__pitch_value = 0
         self.__octave = octave
         self.__velocity = velocity
+        self.__entry_box = None
 
         button = Button(
         app,
@@ -42,20 +47,24 @@ class NoteButton:
         font=("Arial", 10, "bold"),
         )
 
-        if note_name in NoteButton.pure_notes:
+        if note_name in PURE_NOTES:
             NoteButton.label_counter += 1.5
 
             label = Label(app, text=note_name)
             label.place(x=10, y= 10 + (NoteButton.label_counter * 20))
 
-            entry = Entry(app, width=5)
+            self.__entry_box = Entry(app, width=5)
 
-            entry.place(x=50, y= 10 + (NoteButton.label_counter * 20))
-            entry.bind('<Return>', lambda event: self.set_pitch(int(entry.get())))
+            self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
+            self.__entry_box.bind('<Return>', lambda event: self.set_pitch(int(self.__entry_box.get())))
 
         button.place(x=NoteButton.counter*50, y=300)
 
         NoteButton.counter += 1
+
+    def change_enry_box(self):
+        self.__entry_box.delete(0,END)
+        self.__entry_box.insert(0,self.get_pitch())
 
     def get_note_name(self):
         return self.__note_name
@@ -82,31 +91,103 @@ class NoteButton:
         return self.__pitch_value
 
     def send_midi(self):
-        # print("Sending pitch signal:", self.get_pitch())
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
 
-        # print("Sending note signal:", self.get_note_name())
         if len(self.get_note_name()) == 1:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",15,"bold")).place(x=180, y=45)
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
         time.sleep(0.2)
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
 
+class DefaultSetEntry:
+    pitch = [0,0,0,0,0,0,0]
+    general_counter = 0
 
-def create_slider():
-    # Currently slider has no function
-    slider = ttk.Scale(
-        app,
-        from_=0,
-        to=100,
-        orient='horizontal'
-    )
+    place_counter1 = 0
+    place_counter2 = 0
+    def __init__(self,note_name,set_screen):
+        self.__entry_box = None
+        self.__note_name = note_name
+        self.__entry_box_number = DefaultSetEntry.general_counter
 
-    slider.set(50)
-    # slider.bind("<ButtonRelease-1>", lambda event: output.send( mido.Message("pitchwheel", pitch=int(slider.get()))))
-    slider.pack()
+        self.__entry_box = Entry(set_screen, width=5)
+        if DefaultSetEntry.general_counter%2==0:
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=50 + (DefaultSetEntry.place_counter1*100), y=50 )
+            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=50)
+            DefaultSetEntry.place_counter1 += 1
+        else:
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=50 + (DefaultSetEntry.place_counter2*100), y=100 )
+            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
+            DefaultSetEntry.place_counter2 += 1
+        
+        self.__entry_box.bind('<Return>', lambda event: self.set_pitch(int(self.__entry_box.get())))
+
+        DefaultSetEntry.general_counter += 1
+
+    def set_pitch(self,pitch):
+        DefaultSetEntry.pitch[self.__entry_box_number] = pitch
+        print(DefaultSetEntry.pitch)
+    
+    @staticmethod
+    def clear_values():
+        DefaultSetEntry.general_counter = 0
+        DefaultSetEntry.pitch = [0,0,0,0,0,0,0]
+        DefaultSetEntry.place_counter1 = 0
+        DefaultSetEntry.place_counter2 = 0
+
+
+def update_pitch_list(index,pitch_values):
+    global global_pitch_list
+    global_pitch_list[index-1] = pitch_values
+
+def init_set_screen():
+    global PURE_NOTES
+
+    set_screen = Tk()
+    set_screen.title("Set Screen")
+    set_screen.geometry("500x300")
+    set_screen.resizable(False, False)
+
+    DefaultSetEntry.clear_values()
+    for item in PURE_NOTES:
+        DefaultSetEntry(item,set_screen)
+    
+    save_label = Label(set_screen, text="Save to",font=("Arial",15,"bold"))
+    save_label.place(x=220, y=175)
+    save_entry = Entry(set_screen, width=10)
+    save_entry.place(x=220, y=225)
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(int(save_entry.get()), DefaultSetEntry.pitch))
+    save_button.place(x=295, y=225)
+
+    exit_button = Button(set_screen, text="Exit", command=set_screen.destroy, width=7, height=1).pack(side=BOTTOM)
+
+def set_default(button_list,set_number):
+    global PURE_NOTES,global_pitch_list
+
+    counter = 0
+    for button in button_list:
+        if button.get_note_name() in PURE_NOTES:
+            button.set_pitch(global_pitch_list[set_number][counter]) 
+            button.change_enry_box()
+            counter += 1
+
+def default_labels(button_list):
+    global app
+    info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
+    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
+
+    counter = 0
+    
+    for i in range(8):
+        if i >= 4:
+            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(button_list, set_number),width=3, height=2).place(x=520, y=40+counter*50)
+            counter += 1
+        else:
+            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(button_list, set_number) , width=3, height=2).place(x=460, y=40+i*50)
+
+    save_new_button = Button(app, text="Save New", command=lambda : init_set_screen(), width=7, height=1).place(x=475, y=250)
 
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
@@ -144,21 +225,16 @@ def main():
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-    
-    label = Label(app, text="Info", font=("Arial", 15, "bold"))
-    label.pack()
-    
-    # create_slider()
+
     button_list = []
 
     for index,item in enumerate(NOTES):
         button_list.append(NoteButton(item))
 
+    default_labels(button_list) 
     threading.Thread(target=lambda: read_inport(button_list)).start()
 
     app.mainloop()
-    exit()
-
 
 if __name__ == "__main__":
     main()
