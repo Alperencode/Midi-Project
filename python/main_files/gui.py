@@ -42,7 +42,7 @@ class NoteButton:
         button = Button(
         app,
         text=note_name,
-        command = self.send_midi,
+        command = self.send_note_on,
         width=5,
         height=15,
         bg="white",
@@ -93,7 +93,7 @@ class NoteButton:
     def get_pitch(self):
         return self.__pitch_value
 
-    def send_midi(self):
+    def send_note_on(self):
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
 
         if len(self.get_note_name()) == 1:
@@ -101,7 +101,8 @@ class NoteButton:
         else:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
-        time.sleep(0.2)
+    
+    def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
 
 class DefaultSetEntry:
@@ -248,14 +249,22 @@ def coming_note(msg,button_list):
             if item.get_note_name() == note[0]:
                 item.set_octave(note[1])
                 item.set_velocity(msg.velocity)
-                item.send_midi()
+                item.send_note_on()
+                break
+    elif msg.type == 'note_off':
+        for item in button_list:
+            note = number_to_note(msg.note - 8)
+            if item.get_note_name() == note[0]:
+                item.set_octave(note[1])
+                item.set_velocity(msg.velocity)
+                item.send_note_off()
                 break
 
 def read_inport(button_list):
     global note_bool
     while note_bool:
         msg = inport.receive()
-        if msg.type == 'note_on':
+        if msg.type == 'note_on' or msg.type == 'note_off':
             threading.Thread(target=lambda : coming_note(msg,button_list)).start()
 
 def main():
