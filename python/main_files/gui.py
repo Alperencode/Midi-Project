@@ -8,7 +8,6 @@ OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
 note_bool = True
-pitch_bool = False
 button_list = []
 
 global_pitch_list = []
@@ -29,6 +28,7 @@ print(f"inport: {inport}")
 class NoteButton:
     global output,app,PURE_NOTES
 
+    last_pressed_note = None
     counter = 0
     label_counter = 0
     
@@ -65,9 +65,10 @@ class NoteButton:
 
         NoteButton.counter += 1
 
-    def change_enry_box(self):
-        self.__entry_box.delete(0,END)
-        self.__entry_box.insert(0,self.get_pitch())
+    def change_entry_box(self):
+        if self.__entry_box != None:
+            self.__entry_box.delete(0,END)
+            self.__entry_box.insert(0,self.get_pitch())
 
     def get_note_name(self):
         return self.__note_name
@@ -94,6 +95,7 @@ class NoteButton:
         return self.__pitch_value
 
     def send_note_on(self):
+        NoteButton.last_pressed_note = self.get_note_name()
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
 
         if len(self.get_note_name()) == 1:
@@ -132,7 +134,6 @@ class DefaultSetEntry:
 
     def set_pitch(self,pitch):
         DefaultSetEntry.pitch[self.__entry_box_number] = pitch
-        print(DefaultSetEntry.pitch)
     
     @staticmethod
     def clear_values():
@@ -173,49 +174,17 @@ def set_default(button_list,set_number):
     for button in button_list:
         if button.get_note_name() in PURE_NOTES:
             button.set_pitch(global_pitch_list[set_number][counter]) 
-            button.change_enry_box()
+            button.change_entry_box()
             counter += 1
 
-def read_inport_for_pitch(catch_screen):
-    global pitch_bool,note_bool,button_list
-
-    note_bool = False
-    pitch_bool = True
-
-    pitch_text = Text(catch_screen, width=15, height=1,font=("Arial",15,"bold"))
-    pitch_text.config(state=DISABLED)
-    pitch_text.place(x=160, y=75)
-
-    while pitch_bool:
-        msg = inport.receive()
-        if msg.type == 'pitchwheel':
-            pitch_text.config(state=NORMAL)
-            pitch_text.delete(1.0, END)
-            pitch_text.insert(END,msg.pitch)
-            pitch_text.config(state=DISABLED)
-        elif msg.type == 'note_on':
-            threading.Thread(target=lambda : coming_note(msg,button_list)).start()
-
-def init_catch_screen():
-    global pitch_bool,note_bool
-
-    catch_screen = Tk()
-    catch_screen.title("Pitch Catch")
-    catch_screen.geometry("500x300")
-    catch_screen.resizable(False, False)
-
-    main_label = Label(catch_screen, text="Current Pitch",font=("Arial",20,"bold")).place(x=150, y=20)
-    threading.Thread(target=lambda: (read_inport_for_pitch(catch_screen))).start()
-
-    exit_button = Button(catch_screen, text="Exit", command=lambda : (catch_screen.destroy()), width=7, height=1).pack(side=BOTTOM)
-
-    catch_screen.mainloop()
+def catch_pitch_value():
+    pass
 
 def default_labels(button_list):
     global app
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
-    pitch_catch = Button(app, text="Pitch Catch", command= lambda: init_catch_screen()).place(x=250, y=200)
+    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
 
     counter = 0
     
@@ -259,12 +228,17 @@ def coming_note(msg,button_list):
                 item.set_velocity(msg.velocity)
                 item.send_note_off()
                 break
+    elif msg.type == 'pitchwheel':
+        for item in button_list:
+            if item.get_note_name() == NoteButton.last_pressed_note:
+                item.set_pitch(msg.pitch)
+                item.change_entry_box()
 
 def read_inport(button_list):
     global note_bool
     while note_bool:
         msg = inport.receive()
-        if msg.type == 'note_on' or msg.type == 'note_off':
+        if msg.type == 'note_on' or msg.type == 'note_off' or msg.type == 'pitchwheel':
             threading.Thread(target=lambda : coming_note(msg,button_list)).start()
 
 def main():
