@@ -94,14 +94,13 @@ class NoteButton:
             print("Incorrect pitch value")
         else:
             self.__pitch_value = int(pitch)
-            self.change_entry_box()
 
     def get_pitch(self):
         return self.__pitch_value
 
     def send_note_on(self):
         NoteButton.last_pressed_note = self.get_note_name()
-        output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
+        # output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
         output.send( NoteButton.control_change )
 
         if len(self.get_note_name()) == 1:
@@ -110,6 +109,9 @@ class NoteButton:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
+    def send_pitch_wheel(self):
+        output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
+
     def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
         output.send( NoteButton.control_change )
@@ -188,8 +190,10 @@ def set_default(button_list,set_number):
             button.change_entry_box()
             counter += 1
 
-def catch_pitch_value(text_widget):
+def catch_pitch_value():
     global current_pitch
+
+    text_widget = default_labels.pitch_text
     text_widget.config(state=NORMAL)
     text_widget.delete(1.0, END)
     text_widget.insert(END,current_pitch)
@@ -203,17 +207,18 @@ def add_to_pitch(value, text_widget):
             text_widget.insert(END,f"    {NoteButton.last_pressed_note}")
             text_widget.config(state=DISABLED)
             button.set_pitch(button.get_pitch() + value)
+            button.change_entry_box()
             break
 
 def default_labels(button_list):
     global app
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
-    pitch_label = Label(app, text="Saved Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
-    pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
-    pitch_text.place(x=275, y=250)
-    pitch_text.config(state=DISABLED)
-    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value(pitch_text)).place(x=250, y=200)
+    pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
+    default_labels.pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
+    default_labels.pitch_text.place(x=290, y=250)
+    default_labels.pitch_text.config(state=DISABLED)
+    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
 
     current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
     current_note.place(x=265, y=153)
@@ -254,28 +259,37 @@ def coming_note(msg,button_list):
     global current_pitch
 
     if msg.type == 'note_on':
-        for item in button_list:
-            # this '-8' can change depending on the instrument
-            note = number_to_note(msg.note - 8)
-            if item.get_note_name() == note[0]:
-                item.set_octave(note[1])
-                item.set_velocity(msg.velocity)
-                item.send_note_on()
-                break
+        if msg.note == 36:
+            for button in button_list:
+                if button.get_note_name() == NoteButton.last_pressed_note:
+                    button.set_pitch(current_pitch)
+                    button.change_entry_box()
+                    break
+        else:
+            for item in button_list:
+                # this '-8' can change depending on the instrument
+                note = number_to_note(msg.note - 8)
+                if item.get_note_name() == note[0]:
+                    item.set_octave(note[1])
+                    item.send_pitch_wheel()
+                    item.set_velocity(msg.velocity)
+                    item.send_note_on()
+                    break
     elif msg.type == 'note_off':
         for item in button_list:
             note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
                 item.set_octave(note[1])
                 item.set_velocity(msg.velocity)
+                item.send_pitch_wheel()
                 item.send_note_off()
                 break
     elif msg.type == 'pitchwheel':
         for item in button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
-                item.set_pitch(msg.pitch)
-                item.change_entry_box()
+                # item.set_pitch(msg.pitch)
                 current_pitch = msg.pitch
+                catch_pitch_value()
     elif msg.type == 'control_change':
         NoteButton.control_change = msg
         NoteButton.change_control()
