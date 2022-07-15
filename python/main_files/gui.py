@@ -94,6 +94,7 @@ class NoteButton:
             print("Incorrect pitch value")
         else:
             self.__pitch_value = int(pitch)
+            self.change_entry_box()
 
     def get_pitch(self):
         return self.__pitch_value
@@ -194,26 +195,47 @@ def catch_pitch_value(text_widget):
     text_widget.insert(END,current_pitch)
     text_widget.config(state=DISABLED)
 
+def add_to_pitch(value, text_widget):
+    for button in button_list:
+        if button.get_note_name() == NoteButton.last_pressed_note:
+            text_widget.config(state=NORMAL)
+            text_widget.delete(1.0, END)
+            text_widget.insert(END,f"    {NoteButton.last_pressed_note}")
+            text_widget.config(state=DISABLED)
+            button.set_pitch(button.get_pitch() + value)
+            break
+
 def default_labels(button_list):
     global app
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
-    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
+    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
     pitch_label = Label(app, text="Saved Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
     pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
     pitch_text.place(x=275, y=250)
     pitch_text.config(state=DISABLED)
     pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value(pitch_text)).place(x=250, y=200)
 
+    current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
+    current_note.place(x=265, y=153)
+
+    # Adding buttons
+    Button(app, text="-10", command=lambda: add_to_pitch(-10, current_note)).place(x=230, y=150)
+    Button(app, text="-100", command=lambda: add_to_pitch(-100, current_note)).place(x=185, y=150)
+    Button(app, text="-1000", command=lambda: add_to_pitch(-1000, current_note)).place(x=135, y=150)
+
+    Button(app, text="+10", command=lambda: add_to_pitch(10, current_note)).place(x=320, y=150)
+    Button(app, text="+100", command=lambda: add_to_pitch(100, current_note)).place(x=360, y=150)
+    Button(app, text="+1000", command=lambda: add_to_pitch(1000, current_note)).place(x=405, y=150)
+
     counter = 0
-    
     for i in range(8):
         if i >= 4:
-            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(button_list, set_number),width=3, height=2).place(x=520, y=40+counter*50)
+            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(button_list, set_number),width=3, height=2).place(x=540, y=40+counter*50)
             counter += 1
         else:
-            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(button_list, set_number) , width=3, height=2).place(x=460, y=40+i*50)
+            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(button_list, set_number) , width=3, height=2).place(x=480, y=40+i*50)
 
-    save_new_button = Button(app, text="Save New", command=lambda : init_set_screen(), width=7, height=1).place(x=475, y=250)
+    save_new_button = Button(app, text="Save New", command=lambda : init_set_screen(), width=7, height=1).place(x=495, y=250)
 
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
