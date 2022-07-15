@@ -3,14 +3,16 @@ from music21 import *
 from tkinter import ttk
 import mido,random,time,threading,math
 
+# Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
 note_bool = True
 button_list = []
-
+current_pitch = 0
 global_pitch_list = []
+
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0])
 
@@ -177,14 +179,22 @@ def set_default(button_list,set_number):
             button.change_entry_box()
             counter += 1
 
-def catch_pitch_value():
-    pass
+def catch_pitch_value(text_widget):
+    global current_pitch
+    text_widget.config(state=NORMAL)
+    text_widget.delete(1.0, END)
+    text_widget.insert(END,current_pitch)
+    text_widget.config(state=DISABLED)
 
 def default_labels(button_list):
     global app
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=450, y=5)
-    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
+    pitch_label = Label(app, text="Saved Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
+    pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
+    pitch_text.place(x=275, y=250)
+    pitch_text.config(state=DISABLED)
+    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value(pitch_text)).place(x=250, y=200)
 
     counter = 0
     
@@ -211,6 +221,8 @@ def number_to_note(number: int):
     return [note, octave]
 
 def coming_note(msg,button_list):
+    global current_pitch
+
     if msg.type == 'note_on':
         for item in button_list:
             # this '-8' can change depending on the instrument
@@ -233,6 +245,7 @@ def coming_note(msg,button_list):
             if item.get_note_name() == NoteButton.last_pressed_note:
                 item.set_pitch(msg.pitch)
                 item.change_entry_box()
+                current_pitch = msg.pitch
 
 def read_inport(button_list):
     global note_bool
