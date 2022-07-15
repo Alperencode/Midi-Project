@@ -8,6 +8,7 @@ NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 OCTAVES = list(range(11))
 NOTES_IN_OCTAVE = len(NOTES)
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+meesage_types = ['note_on','note_off','pitchwheel','control_change']
 note_bool = True
 button_list = []
 current_pitch = 0
@@ -31,9 +32,10 @@ class NoteButton:
     global output,app,PURE_NOTES
 
     last_pressed_note = None
+    control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
     label_counter = 0
-    
+
     def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
         self.__pitch_value = 0
@@ -99,6 +101,7 @@ class NoteButton:
     def send_note_on(self):
         NoteButton.last_pressed_note = self.get_note_name()
         output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
+        output.send( NoteButton.control_change )
 
         if len(self.get_note_name()) == 1:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
@@ -108,6 +111,11 @@ class NoteButton:
     
     def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        output.send( NoteButton.control_change )
+
+    @staticmethod
+    def change_control():
+        output.send(NoteButton.control_change)
 
 class DefaultSetEntry:
     pitch = [0,0,0,0,0,0,0]
@@ -246,12 +254,15 @@ def coming_note(msg,button_list):
                 item.set_pitch(msg.pitch)
                 item.change_entry_box()
                 current_pitch = msg.pitch
+    elif msg.type == 'control_change':
+        NoteButton.control_change = msg
+        NoteButton.change_control()
 
 def read_inport(button_list):
-    global note_bool
+    global note_bool,meesage_types
     while note_bool:
         msg = inport.receive()
-        if msg.type == 'note_on' or msg.type == 'note_off' or msg.type == 'pitchwheel':
+        if msg.type in meesage_types:
             threading.Thread(target=lambda : coming_note(msg,button_list)).start()
 
 def main():
