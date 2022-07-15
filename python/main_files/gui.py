@@ -44,7 +44,7 @@ class NoteButton:
         button = Button(
         app,
         text=note_name,
-        command = self.send_note_on,
+        command = lambda: (self.send_note_on(), time.sleep(0.15), self.send_note_off()),
         width=5,
         height=15,
         bg="white",
