@@ -62,7 +62,7 @@ class NoteButton:
             self.__entry_box = Entry(app, width=5)
 
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
-            self.__entry_box.bind('<Return>', lambda event: self.set_pitch(int(self.__entry_box.get())))
+            self.__entry_box.bind('<Return>', lambda event: self.set_pitch(self.__entry_box.get()))
 
         button.place(x=NoteButton.counter*50, y=300)
 
@@ -89,17 +89,22 @@ class NoteButton:
         return self.__velocity
 
     def set_pitch(self,pitch):
-        if pitch > 8191 or pitch < -8192:
-            print("Incorrect pitch value")
-        else:
-            self.__pitch_value = int(pitch)
+        try:
+            if pitch > 8191 or pitch < -8192:
+                # Pitch out of range error
+                pass
+            else:
+                self.__pitch_value = int(pitch)
+        except:
+            # Pitch is not int error
+            pass
 
     def get_pitch(self):
         return self.__pitch_value
 
     def send_note_on(self):
         NoteButton.last_pressed_note = self.get_note_name()
-        # output.send( mido.Message("pitchwheel", pitch=self.get_pitch()) )
+        # output.send( mido.Message("pitchwheel", pitch=self.get_pitch()))
         output.send( NoteButton.control_change )
 
         if len(self.get_note_name()) == 1:
@@ -140,13 +145,21 @@ class DefaultSetEntry:
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
             DefaultSetEntry.place_counter2 += 1
         
-        self.__entry_box.bind('<Return>', lambda event: self.set_pitch(int(self.__entry_box.get())))
+        self.__entry_box.bind('<Return>', lambda event: self.set_pitch(self.__entry_box.get()))
 
         DefaultSetEntry.general_counter += 1
 
     def set_pitch(self,pitch):
-        DefaultSetEntry.pitch[self.__entry_box_number] = pitch
-    
+        try:
+            if pitch > 8191 or pitch < -8192:
+                # Pitch out of range error
+                pass
+            else:
+                DefaultSetEntry.pitch[self.__entry_box_number] = pitch
+        except:
+            # Pitch is not int error
+            pass
+
     @staticmethod
     def clear_values():
         DefaultSetEntry.general_counter = 0
@@ -156,7 +169,12 @@ class DefaultSetEntry:
 
 def update_pitch_list(index,pitch_values):
     global global_pitch_list
-    global_pitch_list[index-1] = pitch_values
+    try:
+        global_pitch_list[index-1] = pitch_values
+    except:
+        # Index out of range error
+        # or index is not int error
+        pass
 
 def init_set_screen():
     set_screen = Tk()
@@ -177,7 +195,7 @@ def init_set_screen():
     save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(int(save_entry.get()), DefaultSetEntry.pitch))
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(save_entry.get(), DefaultSetEntry.pitch))
     save_button.place(x=295, y=225)
 
     # exit button
@@ -262,7 +280,7 @@ def default_labels():
         else:
             button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
 
-    save_new_button = Button(app, text="Save New", command=lambda : init_set_screen(), width=7, height=1).place(x=495, y=250)
+    save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
