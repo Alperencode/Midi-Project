@@ -5,31 +5,30 @@ import mido,random,time,threading,math
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-OCTAVES = list(range(11))
-NOTES_IN_OCTAVE = len(NOTES)
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
-meesage_types = ['note_on','note_off','pitchwheel','control_change']
-note_bool = True
-button_list = []
-current_pitch = 0
+MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
+OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+global_button_list = []
 global_pitch_list = []
+current_pitch = 0
+note_bool = True
 
+# setting 8 default sets to values to 0
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0])
 
 outports = mido.get_output_names()
 inports = mido.get_input_names()
-
 print(f"outputs: {outports}")
 print(f"inputs: {inports}")
+
 inport = mido.open_input(inports[-1])
 output = mido.open_output(outports[-2])
-
 print(f"output: {output}")
 print(f"inport: {inport}")
 
 class NoteButton:
-    global output,app,PURE_NOTES
+    global output,app
 
     last_pressed_note = None
     control_change = mido.Message('control_change', control=1, value=0)
@@ -160,8 +159,6 @@ def update_pitch_list(index,pitch_values):
     global_pitch_list[index-1] = pitch_values
 
 def init_set_screen():
-    global PURE_NOTES
-
     set_screen = Tk()
     set_screen.title("Set Screen")
     set_screen.geometry("500x300")
@@ -180,11 +177,13 @@ def init_set_screen():
 
     exit_button = Button(set_screen, text="Exit", command=set_screen.destroy, width=7, height=1).pack(side=BOTTOM)
 
-def set_default(button_list,set_number):
-    global PURE_NOTES,global_pitch_list
+    set_screen.mainloop()
+
+def set_default(set_number):
+    global global_pitch_list,global_button_list
 
     counter = 0
-    for button in button_list:
+    for button in global_button_list:
         if button.get_note_name() in PURE_NOTES:
             button.set_pitch(global_pitch_list[set_number][counter]) 
             button.change_entry_box()
@@ -199,8 +198,9 @@ def catch_pitch_value():
     text_widget.insert(END,current_pitch)
     text_widget.config(state=DISABLED)
 
-def add_to_pitch(value, text_widget):
-    for button in button_list:
+def add_to_pitch(value):
+    text_widget = default_labels.current_note
+    for button in global_button_list:
         if button.get_note_name() == NoteButton.last_pressed_note:
             text_widget.config(state=NORMAL)
             text_widget.delete(1.0, END)
@@ -210,8 +210,8 @@ def add_to_pitch(value, text_widget):
             button.change_entry_box()
             break
 
-def default_labels(button_list):
-    global app
+def default_labels():
+    global app,global_button_list
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
     pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
@@ -220,31 +220,31 @@ def default_labels(button_list):
     default_labels.pitch_text.config(state=DISABLED)
     pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
 
-    current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
-    current_note.place(x=265, y=153)
+    default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
+    default_labels.current_note.place(x=265, y=153)
 
     # Adding buttons
-    Button(app, text="-10", command=lambda: add_to_pitch(-10, current_note)).place(x=230, y=150)
-    Button(app, text="-100", command=lambda: add_to_pitch(-100, current_note)).place(x=185, y=150)
-    Button(app, text="-1000", command=lambda: add_to_pitch(-1000, current_note)).place(x=135, y=150)
+    Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=230, y=150)
+    Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=185, y=150)
+    Button(app, text="-1000", command=lambda: add_to_pitch(-1000)).place(x=135, y=150)
 
-    Button(app, text="+10", command=lambda: add_to_pitch(10, current_note)).place(x=320, y=150)
-    Button(app, text="+100", command=lambda: add_to_pitch(100, current_note)).place(x=360, y=150)
-    Button(app, text="+1000", command=lambda: add_to_pitch(1000, current_note)).place(x=405, y=150)
+    Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=320, y=150)
+    Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=360, y=150)
+    Button(app, text="+1000", command=lambda: add_to_pitch(1000)).place(x=405, y=150)
 
     counter = 0
     for i in range(8):
         if i >= 4:
-            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(button_list, set_number),width=3, height=2).place(x=540, y=40+counter*50)
+            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(set_number),width=3, height=2).place(x=540, y=40+counter*50)
             counter += 1
         else:
-            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(button_list, set_number) , width=3, height=2).place(x=480, y=40+i*50)
+            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
 
     save_new_button = Button(app, text="Save New", command=lambda : init_set_screen(), width=7, height=1).place(x=495, y=250)
 
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
-    note += (NOTES_IN_OCTAVE * octave)
+    note += (12 * octave)
 
     return note-16
 
@@ -255,18 +255,18 @@ def number_to_note(number: int):
 
     return [note, octave]
 
-def coming_note(msg,button_list):
-    global current_pitch
+def coming_note(msg):
+    global current_pitch,global_button_list
 
     if msg.type == 'note_on':
         if msg.note == 36:
-            for button in button_list:
+            for button in global_button_list:
                 if button.get_note_name() == NoteButton.last_pressed_note:
                     button.set_pitch(current_pitch)
                     button.change_entry_box()
                     break
         else:
-            for item in button_list:
+            for item in global_button_list:
                 # this '-8' can change depending on the instrument
                 note = number_to_note(msg.note - 8)
                 if item.get_note_name() == note[0]:
@@ -276,7 +276,7 @@ def coming_note(msg,button_list):
                     item.send_note_on()
                     break
     elif msg.type == 'note_off':
-        for item in button_list:
+        for item in global_button_list:
             note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
                 item.set_octave(note[1])
@@ -285,7 +285,7 @@ def coming_note(msg,button_list):
                 item.send_note_off()
                 break
     elif msg.type == 'pitchwheel':
-        for item in button_list:
+        for item in global_button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
                 # item.set_pitch(msg.pitch)
                 current_pitch = msg.pitch
@@ -294,26 +294,26 @@ def coming_note(msg,button_list):
         NoteButton.control_change = msg
         NoteButton.change_control()
 
-def read_inport(button_list):
-    global note_bool,meesage_types
+def read_inport():
+    global note_bool,global_button_list
     while note_bool:
         msg = inport.receive()
-        if msg.type in meesage_types:
-            threading.Thread(target=lambda : coming_note(msg,button_list)).start()
+        if msg.type in MESSAGE_TYPES:
+            threading.Thread(target=lambda : coming_note(msg)).start()
 
 def main():
-    global app,button_list
+    global app,global_button_list
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
 
 
-    for index,item in enumerate(NOTES):
-        button_list.append(NoteButton(item))
+    for item in NOTES:
+        global_button_list.append(NoteButton(item))
 
-    default_labels(button_list) 
-    threading.Thread(target=lambda: read_inport(button_list)).start()
+    default_labels() 
+    threading.Thread(target=lambda: read_inport()).start()
 
     app.mainloop()
 
