@@ -90,14 +90,15 @@ class NoteButton:
 
     def set_pitch(self,pitch):
         try:
+            pitch = int(pitch)
             if pitch > 8191 or pitch < -8192:
                 # Pitch out of range error
-                pass
+                print("\aPitch out of range")
             else:
                 self.__pitch_value = int(pitch)
         except:
             # Pitch is not int error
-            pass
+            print("\aPitch is not an int")
 
     def get_pitch(self):
         return self.__pitch_value
@@ -151,14 +152,15 @@ class DefaultSetEntry:
 
     def set_pitch(self,pitch):
         try:
+            pitch = int(pitch)
             if pitch > 8191 or pitch < -8192:
                 # Pitch out of range error
-                pass
+                print("\aPitch out of range")
             else:
                 DefaultSetEntry.pitch[self.__entry_box_number] = pitch
         except:
             # Pitch is not int error
-            pass
+            print("\aPitch is not an int 1")
 
     @staticmethod
     def clear_values():
@@ -170,11 +172,12 @@ class DefaultSetEntry:
 def update_pitch_list(index,pitch_values):
     global global_pitch_list
     try:
+        index = int(index)
         global_pitch_list[index-1] = pitch_values
     except:
         # Index out of range error
         # or index is not int error
-        pass
+        print("\aIndex out of range or index is not an int")
 
 def init_set_screen():
     set_screen = Tk()
