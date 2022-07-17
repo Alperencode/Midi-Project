@@ -168,13 +168,19 @@ def init_set_screen():
     for item in PURE_NOTES:
         DefaultSetEntry(item,set_screen)
     
+    # Save to label
     save_label = Label(set_screen, text="Save to",font=("Arial",15,"bold"))
     save_label.place(x=220, y=175)
+    
+    # Save to entry
     save_entry = Entry(set_screen, width=10)
     save_entry.place(x=220, y=225)
+
+    # Save button
     save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(int(save_entry.get()), DefaultSetEntry.pitch))
     save_button.place(x=295, y=225)
 
+    # exit button
     exit_button = Button(set_screen, text="Exit", command=set_screen.destroy, width=7, height=1).pack(side=BOTTOM)
 
     set_screen.mainloop()
@@ -192,6 +198,7 @@ def set_default(set_number):
 def catch_pitch_value():
     global current_pitch
 
+    # Update current pitch text
     text_widget = default_labels.pitch_text
     text_widget.config(state=NORMAL)
     text_widget.delete(1.0, END)
@@ -202,36 +209,51 @@ def add_to_pitch(value):
     text_widget = default_labels.current_note
     for button in global_button_list:
         if button.get_note_name() == NoteButton.last_pressed_note:
+            # Update text between -10/+10 buttons
             text_widget.config(state=NORMAL)
             text_widget.delete(1.0, END)
             text_widget.insert(END,f"    {NoteButton.last_pressed_note}")
             text_widget.config(state=DISABLED)
+            
+            # Update pitch value
             button.set_pitch(button.get_pitch() + value)
             button.change_entry_box()
             break
 
 def default_labels():
     global app,global_button_list
+    
+    # Info label
     info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
+    
+    # Default Sets label
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
+    
+    # Pitch catch text
     pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
+    
+    # Current pitch text
     default_labels.pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
     default_labels.pitch_text.place(x=290, y=250)
     default_labels.pitch_text.config(state=DISABLED)
+
+    # Pitch catch button    
     pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
 
+    # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
+    default_labels.current_note.config(state=DISABLED)
     default_labels.current_note.place(x=265, y=153)
 
     # Adding buttons
     Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=230, y=150)
     Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=185, y=150)
     Button(app, text="-1000", command=lambda: add_to_pitch(-1000)).place(x=135, y=150)
-
     Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=320, y=150)
     Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=360, y=150)
     Button(app, text="+1000", command=lambda: add_to_pitch(1000)).place(x=405, y=150)
 
+    # 1-8 Default set buttons
     counter = 0
     for i in range(8):
         if i >= 4:
@@ -290,12 +312,13 @@ def coming_note(msg):
                 # item.set_pitch(msg.pitch)
                 current_pitch = msg.pitch
                 catch_pitch_value()
+                break
     elif msg.type == 'control_change':
         NoteButton.control_change = msg
         NoteButton.change_control()
 
 def read_inport():
-    global note_bool,global_button_list
+    global note_bool
     while note_bool:
         msg = inport.receive()
         if msg.type in MESSAGE_TYPES:
