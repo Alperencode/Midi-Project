@@ -1,7 +1,7 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time,threading,math
+import mido,random,time,threading,math,json
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -12,6 +12,7 @@ global_button_list = []
 global_pitch_list = []
 current_pitch = 0
 note_bool = True
+json_data = []
 
 # setting 8 default sets to values to 0
 for _ in range(8):
@@ -183,20 +184,26 @@ class DefaultSetEntry:
         DefaultSetEntry.place_counter2 = 0
 
 def update_pitch_list(index):
-    global global_pitch_list
-    try:
-        index = int(index) - 1
-        if index > 7 or index < 0:
-            print("\aIndex out of range")
-            init_set_screen.save_entry.delete(0,END)
-            init_set_screen.save_entry.insert(0,'')
-        else:
-            global_pitch_list[index] = DefaultSetEntry.pitch
-            DefaultSetEntry.clear_values()
-    except:
-        print("\aIndex is not an int")
+    global global_pitch_list,json_data
+    # try:
+    index = int(index) - 1
+    if index > 7 or index < 0:
+        print("\aIndex out of range")
         init_set_screen.save_entry.delete(0,END)
         init_set_screen.save_entry.insert(0,'')
+    else:
+        data_dict = {}
+        data_dict["Set-Number"] = index + 1
+        data_dict["Note-Value"] = [_ for _ in range(7)]
+        for counter,item in enumerate(PURE_NOTES):
+            data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+        json_data.append(data_dict)
+        global_pitch_list[index] = DefaultSetEntry.pitch
+        DefaultSetEntry.clear_values()
+    # except:
+    #     print("\aIndex is not an int")
+    #     init_set_screen.save_entry.delete(0,END)
+    #     init_set_screen.save_entry.insert(0,'')
 
 def init_set_screen():
     set_screen = Tk()
@@ -361,7 +368,9 @@ def coming_note(msg):
         NoteButton.change_control()
 
 def close_program():
-    global app,note_bool
+    global app,note_bool,json_data
+    with open("pitch_data.json", "w") as fp:
+        json.dump(json_data, fp, indent=4)
     app.destroy()
     note_bool = False
 
