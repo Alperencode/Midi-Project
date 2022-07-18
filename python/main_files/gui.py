@@ -92,13 +92,16 @@ class NoteButton:
         try:
             pitch = int(pitch)
             if pitch > 8191 or pitch < -8192:
-                # Pitch out of range error
-                print("\aPitch out of range")
+                self.setting_pitch_error("Pitch out of range")
             else:
                 self.__pitch_value = int(pitch)
         except:
-            # Pitch is not int error
-            print("\aPitch is not an int")
+            self.setting_pitch_error("Pitch is not an int")
+
+    def setting_pitch_error(self,error_message):
+            print(f"\a{error_message}")
+            self.__entry_box.delete(0,END)
+            self.__entry_box.insert(0,self.get_pitch())
 
     def get_pitch(self):
         return self.__pitch_value
@@ -150,17 +153,23 @@ class DefaultSetEntry:
 
         DefaultSetEntry.general_counter += 1
 
+    def setting_pitch_error(self,error_message):
+            print(f"\a{error_message}")
+            self.__entry_box.delete(0,END)
+            self.__entry_box.insert(0,self.get_pitch())
+
     def set_pitch(self,pitch):
         try:
             pitch = int(pitch)
             if pitch > 8191 or pitch < -8192:
-                # Pitch out of range error
-                print("\aPitch out of range")
+                self.setting_pitch_error("Pitch out of range")
             else:
                 DefaultSetEntry.pitch[self.__entry_box_number] = pitch
         except:
-            # Pitch is not int error
-            print("\aPitch is not an int 1")
+            self.setting_pitch_error("Pitch is not an int")
+
+    def get_pitch(self):
+        return DefaultSetEntry.pitch[self.__entry_box_number]    
 
     @staticmethod
     def clear_values():
@@ -173,11 +182,15 @@ def update_pitch_list(index,pitch_values):
     global global_pitch_list
     try:
         index = int(index)
+        if index > 7 or index < 0:
+            print("\aIndex out of range")
+            init_set_screen.save_entry.delete(0,END)
+            init_set_screen.save_entry.insert(0,'')
         global_pitch_list[index-1] = pitch_values
     except:
-        # Index out of range error
-        # or index is not int error
-        print("\aIndex out of range or index is not an int")
+        print("\aIndex is not an int")
+        init_set_screen.save_entry.delete(0,END)
+        init_set_screen.save_entry.insert(0,'')
 
 def init_set_screen():
     set_screen = Tk()
@@ -194,11 +207,11 @@ def init_set_screen():
     save_label.place(x=220, y=175)
     
     # Save to entry
-    save_entry = Entry(set_screen, width=10)
-    save_entry.place(x=220, y=225)
+    init_set_screen.save_entry = Entry(set_screen, width=10)
+    init_set_screen.save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(save_entry.get(), DefaultSetEntry.pitch))
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(), DefaultSetEntry.pitch))
     save_button.place(x=295, y=225)
 
     # exit button
