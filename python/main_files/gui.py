@@ -45,7 +45,7 @@ class NoteButton:
         button = Button(
         app,
         text=note_name,
-        command = lambda: (self.send_note_on(), time.sleep(0.15), self.send_note_off()),
+        command = lambda: (self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.15), self.send_note_off()),
         width=5,
         height=15,
         bg="white",
@@ -115,10 +115,14 @@ class NoteButton:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
+
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
-    def send_pitch_wheel(self):
-        output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
+    def send_pitch_wheel(self,*args):
+        if args:
+            output.send( mido.Message('pitchwheel', pitch=args[0]) )
+        else:
+            output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
 
     def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
@@ -186,7 +190,8 @@ def update_pitch_list(index,pitch_values):
             print("\aIndex out of range")
             init_set_screen.save_entry.delete(0,END)
             init_set_screen.save_entry.insert(0,'')
-        global_pitch_list[index-1] = pitch_values
+        else:
+            global_pitch_list[index-1] = pitch_values
     except:
         print("\aIndex is not an int")
         init_set_screen.save_entry.delete(0,END)
@@ -346,7 +351,7 @@ def coming_note(msg):
     elif msg.type == 'pitchwheel':
         for item in global_button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
-                # item.set_pitch(msg.pitch)
+                item.send_pitch_wheel(msg.pitch)
                 current_pitch = msg.pitch
                 catch_pitch_value()
                 break
