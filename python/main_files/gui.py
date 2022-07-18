@@ -298,6 +298,9 @@ def default_labels():
 
     save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
+    # Exit button
+    exit_button = Button(app, text="Exit", command=close_program, width=7, height=1).place(x=0, y=0)
+
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
     note += (12 * octave)
@@ -351,12 +354,20 @@ def coming_note(msg):
         NoteButton.control_change = msg
         NoteButton.change_control()
 
+def close_program():
+    global app,note_bool
+    app.destroy()
+    note_bool = False
+
 def read_inport():
     global note_bool
-    while note_bool:
-        msg = inport.receive()
-        if msg.type in MESSAGE_TYPES:
-            threading.Thread(target=lambda : coming_note(msg)).start()
+    while True:
+        if note_bool:
+            msg = inport.receive()
+            if msg.type in MESSAGE_TYPES:
+                threading.Thread(target=lambda : coming_note(msg)).start()
+        else:
+            break
 
 def main():
     global app,global_button_list
