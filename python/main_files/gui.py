@@ -182,16 +182,17 @@ class DefaultSetEntry:
         DefaultSetEntry.place_counter1 = 0
         DefaultSetEntry.place_counter2 = 0
 
-def update_pitch_list(index,pitch_values):
+def update_pitch_list(index):
     global global_pitch_list
     try:
-        index = int(index)
+        index = int(index) - 1
         if index > 7 or index < 0:
             print("\aIndex out of range")
             init_set_screen.save_entry.delete(0,END)
             init_set_screen.save_entry.insert(0,'')
         else:
-            global_pitch_list[index-1] = pitch_values
+            global_pitch_list[index] = DefaultSetEntry.pitch
+            DefaultSetEntry.clear_values()
     except:
         print("\aIndex is not an int")
         init_set_screen.save_entry.delete(0,END)
@@ -216,7 +217,7 @@ def init_set_screen():
     init_set_screen.save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(), DefaultSetEntry.pitch))
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get()))
     save_button.place(x=295, y=225)
 
     # exit button
