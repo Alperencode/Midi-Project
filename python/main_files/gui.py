@@ -1,7 +1,7 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time,threading,math
+import mido,random,time,threading,math,json
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -12,6 +12,7 @@ global_button_list = []
 global_pitch_list = []
 current_pitch = 0
 note_bool = True
+json_data = []
 
 # setting 8 default sets to values to 0
 for _ in range(8):
@@ -41,6 +42,7 @@ class NoteButton:
         self.__octave = octave
         self.__velocity = velocity
         self.__entry_box = None
+        self.__saved_pitch = 0
 
         button = Button(
         app,
@@ -62,16 +64,26 @@ class NoteButton:
             self.__entry_box = Entry(app, width=5)
 
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
-            self.__entry_box.bind('<Return>', lambda event: self.set_pitch(self.__entry_box.get()))
+            self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
         button.place(x=NoteButton.counter*50, y=300)
 
         NoteButton.counter += 1
 
-    def change_entry_box(self):
+    def change_entry_box(self,*args):
         if self.__entry_box != None:
-            self.__entry_box.delete(0,END)
-            self.__entry_box.insert(0,self.get_pitch())
+            if args:
+                self.__entry_box.delete(0,END)
+                self.__entry_box.insert(0,args[0])
+            else:
+                self.__entry_box.delete(0,END)
+                self.__entry_box.insert(0,self.get_pitch())
+
+    def get_saved_pitch(self):
+        return self.__saved_pitch
+
+    def set_saved_pitch(self,pitch):
+        self.__saved_pitch = pitch
 
     def get_note_name(self):
         return self.__note_name
@@ -118,11 +130,8 @@ class NoteButton:
 
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
-    def send_pitch_wheel(self,*args):
-        if args:
-            output.send( mido.Message('pitchwheel', pitch=args[0]) )
-        else:
-            output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
+    def send_pitch_wheel(self):
+        output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
 
     def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
@@ -183,7 +192,7 @@ class DefaultSetEntry:
         DefaultSetEntry.place_counter2 = 0
 
 def update_pitch_list(index):
-    global global_pitch_list
+    global global_pitch_list,json_data
     try:
         index = int(index) - 1
         if index > 7 or index < 0:
@@ -191,6 +200,12 @@ def update_pitch_list(index):
             init_set_screen.save_entry.delete(0,END)
             init_set_screen.save_entry.insert(0,'')
         else:
+            data_dict = {}
+            data_dict["Set-Number"] = index + 1
+            data_dict["Note-Value"] = [_ for _ in range(7)]
+            for counter,item in enumerate(PURE_NOTES):
+                data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+            json_data.append(data_dict)
             global_pitch_list[index] = DefaultSetEntry.pitch
             DefaultSetEntry.clear_values()
     except:
@@ -231,8 +246,8 @@ def set_default(set_number):
     counter = 0
     for button in global_button_list:
         if button.get_note_name() in PURE_NOTES:
-            button.set_pitch(global_pitch_list[set_number][counter]) 
-            button.change_entry_box()
+            button.set_saved_pitch(global_pitch_list[set_number][counter]) 
+            button.change_entry_box(global_pitch_list[set_number][counter])
             counter += 1
 
 def catch_pitch_value():
@@ -256,8 +271,8 @@ def add_to_pitch(value):
             text_widget.config(state=DISABLED)
             
             # Update pitch value
-            button.set_pitch(button.get_pitch() + value)
-            button.change_entry_box()
+            button.set_saved_pitch(button.get_pitch() + value)
+            button.change_entry_box(button.get_saved_pitch())
             break
 
 def default_labels():
@@ -327,14 +342,19 @@ def coming_note(msg):
         if msg.note == 36:
             for button in global_button_list:
                 if button.get_note_name() == NoteButton.last_pressed_note:
-                    button.set_pitch(current_pitch)
-                    button.change_entry_box()
+                    button.set_saved_pitch(current_pitch)
+                    button.change_entry_box(current_pitch)
                     break
         else:
             for item in global_button_list:
                 # this '-8' can change depending on the instrument
                 note = number_to_note(msg.note - 8)
                 if item.get_note_name() == note[0]:
+                    item.set_octave(note[1])
+                    if current_pitch == 0:
+                        item.set_pitch(item.get_saved_pitch())
+                    else:
+                        item.set_pitch(current_pitch)
                     item.set_octave(note[1])
                     item.send_pitch_wheel()
                     item.set_velocity(msg.velocity)
@@ -344,16 +364,21 @@ def coming_note(msg):
         for item in global_button_list:
             note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
+                if current_pitch == 0:
+                    item.set_pitch(item.get_saved_pitch())
+                else:
+                    item.set_pitch(current_pitch)
+                item.send_pitch_wheel()
                 item.set_octave(note[1])
                 item.set_velocity(msg.velocity)
-                item.send_pitch_wheel()
                 item.send_note_off()
                 break
     elif msg.type == 'pitchwheel':
         for item in global_button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
-                item.send_pitch_wheel(msg.pitch)
                 current_pitch = msg.pitch
+                item.set_pitch(current_pitch)
+                item.send_pitch_wheel()
                 catch_pitch_value()
                 break
     elif msg.type == 'control_change':
@@ -361,7 +386,9 @@ def coming_note(msg):
         NoteButton.change_control()
 
 def close_program():
-    global app,note_bool
+    global app,note_bool,json_data
+    with open("pitch_data.json", "w") as fp:
+        json.dump(json_data, fp, indent=4)
     app.destroy()
     note_bool = False
 

@@ -52,8 +52,7 @@ while done == False:
     for msg in inport.iter_pending():
         try:
             # print(number_to_note(msg.note))
-            print(msg.velocity)
-            
+            print(msg) 
             converted_note = number_to_note(msg.note)
 
             # print(type(msg.note))
@@ -74,9 +73,7 @@ while done == False:
                 # add note to off list
                 note_list_off.append([x, 0])
         except:
-            print(msg.velocity)
-            print(number_to_note(msg.note-8))
-            print(msg.note-8)
+            print(msg)
            
     # while note list is not empty
     for i in range(len(note_list)):
