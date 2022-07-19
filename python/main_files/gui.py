@@ -6,6 +6,7 @@ import mido,random,time,threading,math,json,os
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+OTHER_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#']
 MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
 OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 global_button_list = []
@@ -35,6 +36,7 @@ class NoteButton:
     control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
     label_counter = 0
+    placement = [0,85,170,255,340,425,510,70,155,325,410,495]
 
     def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
@@ -44,17 +46,17 @@ class NoteButton:
         self.__entry_box = None
         self.__saved_pitch = 0
 
-        button = Button(
-        app,
-        text=note_name,
-        command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.15), self.send_note_off()),
-        width=5,
-        height=15,
-        bg="white",
-        fg="black",
-        font=("Arial", 10, "bold"),
-        )
-
+        if note_name in PURE_NOTES:
+            button = Button(
+            app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            width=10,height=15,bg="white",fg="#241f1f",activebackground="white",activeforeground="#241f1f",font=("Arial", 10, "bold"))
+        else:
+            button = Button(
+            app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
+        
         if note_name in PURE_NOTES:
             NoteButton.label_counter += 1.5
 
@@ -66,7 +68,7 @@ class NoteButton:
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
-        button.place(x=NoteButton.counter*50, y=300)
+        button.place(x=NoteButton.placement[NoteButton.counter], y=300)
 
         NoteButton.counter += 1
 
@@ -467,10 +469,12 @@ def main():
     app.geometry("600x500")
     app.resizable(False, False)
 
-    for item in NOTES:
+    for item in PURE_NOTES:
+        global_button_list.append(NoteButton(item))
+    for item in OTHER_NOTES:
         global_button_list.append(NoteButton(item))
 
-    default_labels() 
+    default_labels()
     threading.Thread(target=lambda: read_inport()).start()
 
     app.mainloop()
