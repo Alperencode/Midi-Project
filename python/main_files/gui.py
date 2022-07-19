@@ -248,7 +248,10 @@ def init_set_screen():
     init_set_screen.save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get()))
+    save_button = Button(set_screen, text="Save", command=lambda: threading.Thread(target=lambda: update_pitch_list(init_set_screen.save_entry.get())).start())
+    save_button.place(x=220, y=250)
+    
+    set_screen.mainloop()
     save_button.place(x=295, y=225)
 
     # exit button
@@ -287,8 +290,8 @@ def add_to_pitch(value):
             text_widget.config(state=DISABLED)
             
             # Update pitch value
-            button.set_saved_pitch(button.get_saved_pitch() + value)
-            button.change_entry_box(button.get_saved_pitch())
+            threading.Thread(target=lambda: button.set_saved_pitch(button.get_saved_pitch() + value)).start()
+            threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
             break
 
 def default_labels():
@@ -309,7 +312,7 @@ def default_labels():
     default_labels.pitch_text.config(state=DISABLED)
 
     # Pitch catch button    
-    pitch_catch = Button(app, text="Pitch Catch", command= lambda: catch_pitch_value()).place(x=250, y=200)
+    pitch_catch = Button(app, text="Pitch Catch", command=lambda: threading.Thread(target=lambda: catch_pitch_value()).start() ).place(x=250, y=200)
 
     # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
@@ -328,10 +331,10 @@ def default_labels():
     counter = 0
     for i in range(8):
         if i >= 4:
-            button = Button(app, text=f"{(counter+4)+1}", command= lambda set_number=(counter+4): set_default(set_number),width=3, height=2).place(x=540, y=40+counter*50)
+            button = Button(app, text=f"{(counter+4)+1}", command=lambda set_number=(counter+4): set_default(set_number),width=3, height=2).place(x=540, y=40+counter*50)
             counter += 1
         else:
-            button = Button(app, text=f"{i+1}", command= lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
+            button = Button(app, text=f"{i+1}", command=lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
 
     save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
@@ -358,48 +361,48 @@ def coming_note(msg):
         if msg.note == 36:
             for button in global_button_list:
                 if button.get_note_name() == NoteButton.last_pressed_note:
-                    button.set_saved_pitch(current_pitch)
-                    button.change_entry_box(current_pitch)
+                    threading.Thread(target=lambda: button.set_saved_pitch(current_pitch) ).start()
+                    threading.Thread(target=lambda: button.change_entry_box(current_pitch) ).start()
                     break
         else:
             for item in global_button_list:
                 # this '-8' can change depending on the instrument
                 note = number_to_note(msg.note - 8)
                 if item.get_note_name() == note[0]:
-                    item.set_octave(note[1])
+                    threading.Thread(target=lambda: item.set_octave(note[1]) ).start()
                     if current_pitch == 0:
-                        item.set_pitch(item.get_saved_pitch())
+                        threading.Thread(target=lambda: item.set_pitch(item.get_saved_pitch())).start()
                     else:
-                        item.set_pitch(current_pitch)
-                    item.set_octave(note[1])
-                    item.send_pitch_wheel()
-                    item.set_velocity(msg.velocity)
-                    item.send_note_on()
+                        threading.Thread(target=lambda: item.set_pitch(current_pitch)).start()
+                    threading.Thread(target=lambda: item.set_octave(note[1]) ).start()
+                    threading.Thread(target=lambda: item.send_pitch_wheel()).start()
+                    threading.Thread(target=lambda: item.set_velocity(msg.velocity) ).start()
+                    threading.Thread(target=lambda: item.send_note_on()).start()
                     break
     elif msg.type == 'note_off':
         for item in global_button_list:
             note = number_to_note(msg.note - 8)
             if item.get_note_name() == note[0]:
                 if current_pitch == 0:
-                    item.set_pitch(item.get_saved_pitch())
+                    threading.Thread(target=lambda: item.set_pitch(item.get_saved_pitch())).start()
                 else:
-                    item.set_pitch(current_pitch)
-                item.send_pitch_wheel()
-                item.set_octave(note[1])
-                item.set_velocity(msg.velocity)
-                item.send_note_off()
+                    threading.Thread(target=lambda: item.set_pitch(current_pitch)).start()
+                threading.Thread(target=lambda: item.send_pitch_wheel()).start()
+                threading.Thread(target=lambda: item.set_velocity(msg.velocity) ).start()
+                threading.Thread(target=lambda: item.set_octave(note[1]) ).start()
+                threading.Thread(target=lambda: item.send_note_off()).start()
                 break
     elif msg.type == 'pitchwheel':
         for item in global_button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
                 current_pitch = converter(msg.pitch, True)
-                item.set_pitch(current_pitch)
-                item.send_pitch_wheel()
-                catch_pitch_value()
+                threading.Thread(target=lambda: item.set_pitch(current_pitch)).start()
+                threading.Thread(target=lambda: item.send_pitch_wheel()).start()
+                threading.Thread(target=lambda: catch_pitch_value()).start() 
                 break
     elif msg.type == 'control_change':
         NoteButton.control_change = msg
-        NoteButton.change_control()
+        threading.Thread(target=lambda: NoteButton.change_control()).start()
 
 def close_program():
     global app,note_bool,json_data
@@ -414,7 +417,7 @@ def read_inport():
         if note_bool:
             msg = inport.receive()
             if msg.type in MESSAGE_TYPES:
-                threading.Thread(target=lambda : coming_note(msg)).start()
+                threading.Thread(target=lambda: coming_note(msg)).start()
         else:
             break
 
