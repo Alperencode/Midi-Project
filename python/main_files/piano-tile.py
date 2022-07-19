@@ -48,30 +48,22 @@ while done == False:
         if event.type == pygame.QUIT:
             done=True
     
-    # while notes are coming in
+    def converter(value, control):
+        # if control: pitch to cent
+        # else: cent to pitch
+        if control:
+            NewValue = (((value - (-8192)) * 200) / 16383) + (-100)
+        else:
+            NewValue = (((value - (-100)) * 16383) / 200) + (-8192)
+        return int(NewValue)
+
     for msg in inport.iter_pending():
         try:
-            # print(number_to_note(msg.note))
-            print(msg) 
-            converted_note = number_to_note(msg.note)
-
-            # print(type(msg.note))
-            
-            n = note.Note(str(converted_note[0]) + str(converted_note[1]))
-
-            # print(type(n))
-            stream1.append(n)
-            
-            n = msg.note
-            x=(n-47)*10 
-
-            # if note is on
-            if msg.velocity>0:
-                # add note to list
-                note_list.append([x, 0])
-            else:
-                # add note to off list
-                note_list_off.append([x, 0])
+            if msg.type == 'pitchwheel':
+                cent = converter(msg.pitch, True)
+                pitch = converter(cent, False)
+                print(f"pitch {pitch}")
+                print(f"cent {cent}")
         except:
             print(msg)
            
