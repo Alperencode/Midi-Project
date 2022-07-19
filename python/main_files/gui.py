@@ -18,15 +18,6 @@ json_data = []
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0])
 
-outports = mido.get_output_names()
-inports = mido.get_input_names()
-print(f"outputs: {outports}")
-print(f"inputs: {inports}")
-
-inport = mido.open_input(inports[-1])
-output = mido.open_output(outports[-2])
-print(f"output: {output}")
-print(f"inport: {inport}")
 
 def converter(value, control):
     # if control: pitch to cent
@@ -423,7 +414,7 @@ def close_program():
 
 def read_inport():
     global note_bool
-    while True:
+    while note_bool:
         msg = inport.receive()
         if note_bool:
             if msg.type in MESSAGE_TYPES:
@@ -431,13 +422,50 @@ def read_inport():
         else:
             break
 
+def connect_ports(port1, port2):
+    global inport,output
+    inport = mido.open_input(port1)
+    output = mido.open_output(port2)
+
+def port_select_screen():
+    global inport,output
+    port_screen = Tk()
+    port_screen.overrideredirect(True)
+    port_screen.title("Select Port")
+    port_screen.geometry("400x400+500+200")
+    port_screen.configure(background='#2F4F4F')
+    
+    outports = mido.get_output_names()
+    inports = mido.get_input_names()
+
+    Label(port_screen, text="Select Ports", font=("Arial",20,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
+
+    Label(port_screen, text="Input Port", font=("Arial",12,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)    
+    inport_var = StringVar()
+    inport_var.set(inports[-1])
+    inport_dropdown = OptionMenu(port_screen, inport_var, *inports)
+    inport_dropdown.pack(side=TOP, pady=10)    
+    
+    Label(port_screen, text="Output Port", font=("Arial",12,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
+    outport_var = StringVar()
+    outport_var.set(outports[-2])
+    outport_dropdown = OptionMenu(port_screen, outport_var, *outports)
+    outport_dropdown.pack(side=TOP, pady=10)
+
+    Button(port_screen, text="Connect", command=lambda: (connect_ports(inport_var.get(), outport_var.get()), port_screen.destroy()), width=10, height=1).pack(side=TOP, pady=10)
+
+    Button(port_screen, text="Cancel", command=lambda: (port_screen.destroy(), exit()), width=10, height=1).pack(side=BOTTOM, pady=10)
+    port_screen.mainloop()
+
 def main():
     global app,global_button_list
+    
+    port_select_screen()
+
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-
 
     for item in NOTES:
         global_button_list.append(NoteButton(item))
