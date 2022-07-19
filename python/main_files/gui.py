@@ -248,14 +248,7 @@ def init_set_screen():
     init_set_screen.save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: threading.Thread(target=lambda: update_pitch_list(init_set_screen.save_entry.get())).start())
-    save_button.place(x=220, y=250)
-    
-    set_screen.mainloop()
-    save_button.place(x=295, y=225)
-
-    # exit button
-    exit_button = Button(set_screen, text="Exit", command=set_screen.destroy, width=7, height=1).pack(side=BOTTOM)
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get())).place(x=295, y=225)
 
     set_screen.mainloop()
 
@@ -290,9 +283,18 @@ def add_to_pitch(value):
             text_widget.config(state=DISABLED)
             
             # Update pitch value
-            threading.Thread(target=lambda: button.set_saved_pitch(button.get_saved_pitch() + value)).start()
-            threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
-            break
+            if button.get_saved_pitch() + value > 100:
+                threading.Thread(target=lambda: button.set_saved_pitch(100)).start()
+                button.change_entry_box(button.get_saved_pitch())
+                break
+            elif button.get_saved_pitch() + value < -100:
+                threading.Thread(target=lambda: button.set_saved_pitch(-100)).start()
+                button.change_entry_box(button.get_saved_pitch())
+                break
+            else:
+                threading.Thread(target=lambda: button.set_saved_pitch(button.get_saved_pitch() + value)).start()
+                threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
+                break
 
 def default_labels():
     global app,global_button_list
@@ -312,7 +314,7 @@ def default_labels():
     default_labels.pitch_text.config(state=DISABLED)
 
     # Pitch catch button    
-    pitch_catch = Button(app, text="Pitch Catch", command=lambda: threading.Thread(target=lambda: catch_pitch_value()).start() ).place(x=250, y=200)
+    pitch_catch = Button(app, text="Pitch Catch", command=lambda: catch_pitch_value()).place(x=250, y=200)
 
     # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
