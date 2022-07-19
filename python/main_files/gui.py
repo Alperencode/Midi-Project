@@ -408,23 +408,24 @@ def coming_note(msg):
 
 def close_program():
     global app,note_bool,json_data
-    files = os.listdir()
-    json_files = [f for f in files if f.endswith('.json')]
-    if json_files:
-        last_number = int((json_files[-1].split(".")[0])[-1])
-        with open(f"pitch_data{last_number+1}.json", "w") as fp:
-            json.dump(json_data, fp, indent=4)
-    else:
-        with open(f"pitch_data1.json", "w") as fp:
-            json.dump(json_data, fp, indent=4)
+    if json_data:
+        files = os.listdir()
+        json_files = [f for f in files if f.endswith('.json')]
+        if json_files:
+            last_number = int((json_files[-1].split(".")[0])[-1])
+            with open(f"pitch_data{last_number+1}.json", "w") as fp:
+                json.dump(json_data, fp, indent=4)
+        else:
+            with open(f"pitch_data1.json", "w") as fp:
+                json.dump(json_data, fp, indent=4)
     app.destroy()
     note_bool = False
 
 def read_inport():
     global note_bool
     while True:
+        msg = inport.receive()
         if note_bool:
-            msg = inport.receive()
             if msg.type in MESSAGE_TYPES:
                 threading.Thread(target=lambda: coming_note(msg)).start()
         else:
