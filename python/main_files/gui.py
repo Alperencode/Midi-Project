@@ -28,6 +28,15 @@ output = mido.open_output(outports[-2])
 print(f"output: {output}")
 print(f"inport: {inport}")
 
+def converter(value, control):
+    # if control: pitch to cent
+    # else: cent to pitch
+    if control:
+        new_value = (((value - (-8192)) * 200) / 16383) + (-100)
+    else:
+        new_value = (((value - (-100)) * 16383) / 200) + (-8192)
+    return int(new_value)
+
 class NoteButton:
     global output,app
 
@@ -47,7 +56,7 @@ class NoteButton:
         button = Button(
         app,
         text=note_name,
-        command = lambda: (self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.15), self.send_note_off()),
+        command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.15), self.send_note_off()),
         width=5,
         height=15,
         bg="white",
@@ -83,7 +92,14 @@ class NoteButton:
         return self.__saved_pitch
 
     def set_saved_pitch(self,pitch):
-        self.__saved_pitch = pitch
+        try:
+            pitch = int(pitch)
+            if pitch > 100 or pitch < -100:
+                self.setting_pitch_error("Pitch out of range")
+            else:
+                self.__saved_pitch = int(pitch)
+        except:
+            self.setting_pitch_error("Pitch is not an int")
 
     def get_note_name(self):
         return self.__note_name
@@ -103,7 +119,7 @@ class NoteButton:
     def set_pitch(self,pitch):
         try:
             pitch = int(pitch)
-            if pitch > 8191 or pitch < -8192:
+            if pitch > 100 or pitch < -100:
                 self.setting_pitch_error("Pitch out of range")
             else:
                 self.__pitch_value = int(pitch)
@@ -120,7 +136,6 @@ class NoteButton:
 
     def send_note_on(self):
         NoteButton.last_pressed_note = self.get_note_name()
-        # output.send( mido.Message("pitchwheel", pitch=self.get_pitch()))
         output.send( NoteButton.control_change )
 
         if len(self.get_note_name()) == 1:
@@ -131,7 +146,8 @@ class NoteButton:
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
     def send_pitch_wheel(self):
-        output.send( mido.Message('pitchwheel', pitch=self.get_pitch()) )
+        sending_value = converter(self.get_pitch(), False)
+        output.send( mido.Message('pitchwheel', pitch=sending_value) )
 
     def send_note_off(self):
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
@@ -174,7 +190,7 @@ class DefaultSetEntry:
     def set_pitch(self,pitch):
         try:
             pitch = int(pitch)
-            if pitch > 8191 or pitch < -8192:
+            if pitch > 100 or pitch < -100:
                 self.setting_pitch_error("Pitch out of range")
             else:
                 DefaultSetEntry.pitch[self.__entry_box_number] = pitch
@@ -271,7 +287,7 @@ def add_to_pitch(value):
             text_widget.config(state=DISABLED)
             
             # Update pitch value
-            button.set_saved_pitch(button.get_pitch() + value)
+            button.set_saved_pitch(button.get_saved_pitch() + value)
             button.change_entry_box(button.get_saved_pitch())
             break
 
@@ -301,12 +317,12 @@ def default_labels():
     default_labels.current_note.place(x=265, y=153)
 
     # Adding buttons
-    Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=230, y=150)
-    Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=185, y=150)
-    Button(app, text="-1000", command=lambda: add_to_pitch(-1000)).place(x=135, y=150)
-    Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=320, y=150)
-    Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=360, y=150)
-    Button(app, text="+1000", command=lambda: add_to_pitch(1000)).place(x=405, y=150)
+    Button(app, text="-1", command=lambda: add_to_pitch(-1)).place(x=230, y=150)
+    Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=185, y=150)
+    Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=135, y=150)
+    Button(app, text="+1", command=lambda: add_to_pitch(1)).place(x=320, y=150)
+    Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=360, y=150)
+    Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=405, y=150)
 
     # 1-8 Default set buttons
     counter = 0
@@ -376,7 +392,7 @@ def coming_note(msg):
     elif msg.type == 'pitchwheel':
         for item in global_button_list:
             if item.get_note_name() == NoteButton.last_pressed_note:
-                current_pitch = msg.pitch
+                current_pitch = converter(msg.pitch, True)
                 item.set_pitch(current_pitch)
                 item.send_pitch_wheel()
                 catch_pitch_value()
