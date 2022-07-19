@@ -1,7 +1,7 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time,threading,math,json
+import mido,random,time,threading,math,json,os
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -408,8 +408,15 @@ def coming_note(msg):
 
 def close_program():
     global app,note_bool,json_data
-    with open("pitch_data.json", "w") as fp:
-        json.dump(json_data, fp, indent=4)
+    files = os.listdir()
+    json_files = [f for f in files if f.endswith('.json')]
+    if json_files:
+        last_number = int((json_files[-1].split(".")[0])[-1])
+        with open(f"pitch_data{last_number+1}.json", "w") as fp:
+            json.dump(json_data, fp, indent=4)
+    else:
+        with open(f"pitch_data1.json", "w") as fp:
+            json.dump(json_data, fp, indent=4)
     app.destroy()
     note_bool = False
 
