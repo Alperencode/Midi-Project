@@ -36,7 +36,7 @@ class NoteButton:
     control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
     label_counter = 0
-    placement = [0,85,170,255,340,425,510,70,155,325,410,495]
+    placement = [0,85,170,255,340,425,510,65,150,320,405,490]
 
     def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
@@ -227,6 +227,7 @@ def init_set_screen():
     set_screen.title("Set Screen")
     set_screen.geometry("500x300")
     set_screen.resizable(False, False)
+    set_screen.iconbitmap('musical_score.ico')
 
     DefaultSetEntry.clear_values()
     for item in PURE_NOTES:
@@ -431,11 +432,13 @@ def connect_ports(port1, port2):
 
 def port_select_screen():
     global inport,output
+
     port_screen = Tk()
-    port_screen.overrideredirect(True)
     port_screen.title("Select Port")
     port_screen.geometry("400x400+500+200")
     port_screen.configure(background='#2F4F4F')
+    port_screen.iconbitmap('connect.ico')
+    port_screen.protocol("WM_DELETE_WINDOW", lambda: exit())
     
     outports = mido.get_output_names()
     inports = mido.get_input_names()
@@ -456,7 +459,6 @@ def port_select_screen():
 
     Button(port_screen, text="Connect", command=lambda: (connect_ports(inport_var.get(), outport_var.get()), port_screen.destroy()), width=10, height=1).pack(side=TOP, pady=10)
 
-    Button(port_screen, text="Cancel", command=lambda: (port_screen.destroy(), exit()), width=10, height=1).pack(side=BOTTOM, pady=10)
     port_screen.mainloop()
 
 def main():
@@ -468,6 +470,8 @@ def main():
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
+    app.iconbitmap('piano.ico')
+    app.protocol("WM_DELETE_WINDOW", close_program)
 
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
