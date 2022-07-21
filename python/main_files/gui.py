@@ -1,11 +1,12 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk
-import mido,random,time,threading,math,json
+import mido,random,time,threading,math,json,os
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+OTHER_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#']
 MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
 OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 global_button_list = []
@@ -18,15 +19,6 @@ json_data = []
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0])
 
-outports = mido.get_output_names()
-inports = mido.get_input_names()
-print(f"outputs: {outports}")
-print(f"inputs: {inports}")
-
-inport = mido.open_input(inports[-1])
-output = mido.open_output(outports[-2])
-print(f"output: {output}")
-print(f"inport: {inport}")
 
 def converter(value, control):
     # if control: pitch to cent
@@ -44,6 +36,7 @@ class NoteButton:
     control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
     label_counter = 0
+    placement = [0,85,170,255,340,425,510,65,150,320,405,490]
 
     def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
@@ -53,17 +46,17 @@ class NoteButton:
         self.__entry_box = None
         self.__saved_pitch = 0
 
-        button = Button(
-        app,
-        text=note_name,
-        command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.15), self.send_note_off()),
-        width=5,
-        height=15,
-        bg="white",
-        fg="black",
-        font=("Arial", 10, "bold"),
-        )
-
+        if note_name in PURE_NOTES:
+            button = Button(
+            app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            width=10,height=15,bg="white",fg="#241f1f",activebackground="white",activeforeground="#241f1f",font=("Arial", 10, "bold"))
+        else:
+            button = Button(
+            app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
+        
         if note_name in PURE_NOTES:
             NoteButton.label_counter += 1.5
 
@@ -75,7 +68,7 @@ class NoteButton:
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
-        button.place(x=NoteButton.counter*50, y=300)
+        button.place(x=NoteButton.placement[NoteButton.counter], y=300)
 
         NoteButton.counter += 1
 
@@ -234,6 +227,7 @@ def init_set_screen():
     set_screen.title("Set Screen")
     set_screen.geometry("500x300")
     set_screen.resizable(False, False)
+    set_screen.iconbitmap('musical_score.ico')
 
     DefaultSetEntry.clear_values()
     for item in PURE_NOTES:
@@ -408,33 +402,83 @@ def coming_note(msg):
 
 def close_program():
     global app,note_bool,json_data
-    with open("pitch_data.json", "w") as fp:
-        json.dump(json_data, fp, indent=4)
+    if json_data:
+        files = os.listdir()
+        json_files = [f for f in files if f.endswith('.json')]
+        if json_files:
+            last_number = int((json_files[-1].split(".")[0])[-1])
+            with open(f"pitch_data{last_number+1}.json", "w") as fp:
+                json.dump(json_data, fp, indent=4)
+        else:
+            with open(f"pitch_data1.json", "w") as fp:
+                json.dump(json_data, fp, indent=4)
     app.destroy()
     note_bool = False
 
 def read_inport():
     global note_bool
-    while True:
+    while note_bool:
+        msg = inport.receive()
         if note_bool:
-            msg = inport.receive()
             if msg.type in MESSAGE_TYPES:
                 threading.Thread(target=lambda: coming_note(msg)).start()
         else:
             break
 
+def connect_ports(port1, port2):
+    global inport,output
+    inport = mido.open_input(port1)
+    output = mido.open_output(port2)
+
+def port_select_screen():
+    global inport,output
+
+    port_screen = Tk()
+    port_screen.title("Select Port")
+    port_screen.geometry("400x400+500+200")
+    port_screen.configure(background='#2F4F4F')
+    port_screen.iconbitmap('connect.ico')
+    port_screen.protocol("WM_DELETE_WINDOW", lambda: exit())
+    
+    outports = mido.get_output_names()
+    inports = mido.get_input_names()
+
+    Label(port_screen, text="Select Ports", font=("Arial",20,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
+
+    Label(port_screen, text="Input Port", font=("Arial",12,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)    
+    inport_var = StringVar()
+    inport_var.set(inports[-1])
+    inport_dropdown = OptionMenu(port_screen, inport_var, *inports)
+    inport_dropdown.pack(side=TOP, pady=10)    
+    
+    Label(port_screen, text="Output Port", font=("Arial",12,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
+    outport_var = StringVar()
+    outport_var.set(outports[-2])
+    outport_dropdown = OptionMenu(port_screen, outport_var, *outports)
+    outport_dropdown.pack(side=TOP, pady=10)
+
+    Button(port_screen, text="Connect", command=lambda: (connect_ports(inport_var.get(), outport_var.get()), port_screen.destroy()), width=10, height=1).pack(side=TOP, pady=10)
+
+    port_screen.mainloop()
+
 def main():
     global app,global_button_list
+    
+    port_select_screen()
+
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
+    app.iconbitmap('piano.ico')
+    app.protocol("WM_DELETE_WINDOW", close_program)
 
-
-    for item in NOTES:
+    for item in PURE_NOTES:
+        global_button_list.append(NoteButton(item))
+    for item in OTHER_NOTES:
         global_button_list.append(NoteButton(item))
 
-    default_labels() 
+    default_labels()
     threading.Thread(target=lambda: read_inport()).start()
 
     app.mainloop()
