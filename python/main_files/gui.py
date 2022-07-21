@@ -1,6 +1,6 @@
 from tkinter import *
 from music21 import *
-from tkinter import ttk
+from tkinter import ttk,messagebox
 import mido,random,time,threading,math,json,os
 
 # Global variables
@@ -439,6 +439,9 @@ def port_select_screen():
     
     outports = mido.get_output_names()
     inports = mido.get_input_names()
+    if (not outports) or (not inports):
+        messagebox.showerror("Error", "No open ports found")
+        exit()
 
     Label(port_screen, text="Select Ports", font=("Arial",20,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
 
