@@ -334,9 +334,6 @@ def default_labels():
 
     save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
-    # Exit button
-    exit_button = Button(app, text="Exit", command=close_program, width=7, height=1).place(x=0, y=0)
-
 def note_to_number(note: str, octave: int):
     note = NOTES.index(note) + 4
     note += (12 * octave)
