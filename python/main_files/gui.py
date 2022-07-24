@@ -17,7 +17,7 @@ json_data = []
 
 # setting 8 default sets to values to 0
 for _ in range(8):
-    global_pitch_list.append([0,0,0,0,0,0,0])
+    global_pitch_list.append([0,0,0,0,0,0,0,0,0,0,0,0])
 
 
 def converter(value, control):
@@ -35,7 +35,8 @@ class NoteButton:
     last_pressed_note = None
     control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
-    label_counter = 0
+    label_counter1 = 0
+    label_counter2 = 0
     placement = [0,85,170,255,340,425,510,65,150,320,405,490]
 
     def __init__(self,note_name,octave=5,velocity=64):
@@ -58,14 +59,23 @@ class NoteButton:
             width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
         
         if note_name in PURE_NOTES:
-            NoteButton.label_counter += 1.5
+            NoteButton.label_counter1 += 1.5
 
             label = Label(app, text=note_name)
-            label.place(x=10, y= 10 + (NoteButton.label_counter * 20))
+            label.place(x=10, y= 10 + (NoteButton.label_counter1 * 20))
 
             self.__entry_box = Entry(app, width=5)
 
-            self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
+            self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter1 * 20))
+            self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
+        else:
+            NoteButton.label_counter2 += 1.5
+            label = Label(app, text=note_name)
+            label.place(x=100, y= 10 + (NoteButton.label_counter2 * 20))
+
+            self.__entry_box = Entry(app, width=5)
+
+            self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter2 * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
         button.place(x=NoteButton.placement[NoteButton.counter], y=300)
@@ -151,7 +161,7 @@ class NoteButton:
         output.send(NoteButton.control_change)
 
 class DefaultSetEntry:
-    pitch = [0,0,0,0,0,0,0]
+    pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
     general_counter = 0
 
     place_counter1 = 0
@@ -163,11 +173,11 @@ class DefaultSetEntry:
 
         self.__entry_box = Entry(set_screen, width=5)
         if DefaultSetEntry.general_counter%2==0:
-            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=50 + (DefaultSetEntry.place_counter1*100), y=50 )
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter1*100), y=50 )
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=50)
             DefaultSetEntry.place_counter1 += 1
         else:
-            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=50 + (DefaultSetEntry.place_counter2*100), y=100 )
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter2*100), y=100 )
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
             DefaultSetEntry.place_counter2 += 1
         
@@ -196,7 +206,7 @@ class DefaultSetEntry:
     @staticmethod
     def clear_values():
         DefaultSetEntry.general_counter = 0
-        DefaultSetEntry.pitch = [0,0,0,0,0,0,0]
+        DefaultSetEntry.pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
         DefaultSetEntry.place_counter1 = 0
         DefaultSetEntry.place_counter2 = 0
 
@@ -225,7 +235,7 @@ def update_pitch_list(index):
 def init_set_screen():
     set_screen = Tk()
     set_screen.title("Set Screen")
-    set_screen.geometry("500x300")
+    set_screen.geometry("650x300")
     set_screen.resizable(False, False)
     set_screen.iconbitmap('musical_score.ico')
 
@@ -299,29 +309,29 @@ def default_labels():
     # Default Sets label
     sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
     
-    # Pitch catch text
-    pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=250)
+    # Current Pitch label
+    pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=260)
     
     # Current pitch text
     default_labels.pitch_text = Text(app, width=5, height=1, font=("Arial",15,"bold"))
-    default_labels.pitch_text.place(x=290, y=250)
+    default_labels.pitch_text.place(x=290, y=260)
     default_labels.pitch_text.config(state=DISABLED)
 
     # Pitch catch button    
-    pitch_catch = Button(app, text="Pitch Catch", command=lambda: catch_pitch_value()).place(x=250, y=200)
+    # pitch_catch = Button(app, text="Pitch Catch", command=lambda: catch_pitch_value()).place(x=250, y=200)
 
     # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
     default_labels.current_note.config(state=DISABLED)
-    default_labels.current_note.place(x=265, y=153)
+    default_labels.current_note.place(x=265, y=213)
 
     # Adding buttons
-    Button(app, text="-1", command=lambda: add_to_pitch(-1)).place(x=230, y=150)
-    Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=185, y=150)
-    Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=135, y=150)
-    Button(app, text="+1", command=lambda: add_to_pitch(1)).place(x=320, y=150)
-    Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=360, y=150)
-    Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=405, y=150)
+    Button(app, text="-1", command=lambda: add_to_pitch(-1)).place(x=230, y=210)
+    Button(app, text="-10", command=lambda: add_to_pitch(-10)).place(x=185, y=210)
+    Button(app, text="-100", command=lambda: add_to_pitch(-100)).place(x=135, y=210)
+    Button(app, text="+1", command=lambda: add_to_pitch(1)).place(x=320, y=210)
+    Button(app, text="+10", command=lambda: add_to_pitch(10)).place(x=360, y=210)
+    Button(app, text="+100", command=lambda: add_to_pitch(100)).place(x=405, y=210)
 
     # 1-8 Default set buttons
     counter = 0
