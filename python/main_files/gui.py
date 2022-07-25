@@ -37,6 +37,7 @@ class NoteButton:
     counter = 0
     label_counter = 0
     placement = [0,85,170,255,340,425,510,65,150,320,405,490]
+    pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
 
     def __init__(self,note_name,octave=5,velocity=64):
         self.__note_name = note_name
@@ -45,6 +46,7 @@ class NoteButton:
         self.__velocity = velocity
         self.__entry_box = None
         self.__saved_pitch = 0
+        self.__entry_box_number = NoteButton.counter
 
         if note_name in PURE_NOTES:
             button = Button(
@@ -81,6 +83,9 @@ class NoteButton:
 
         NoteButton.counter += 1
 
+    def update_local_pitch(self):
+        NoteButton.pitch[self.__entry_box_number] = self.__saved_pitch
+    
     def change_entry_box(self,*args):
         if self.__entry_box != None:
             if args:
@@ -209,7 +214,7 @@ class DefaultSetEntry:
         DefaultSetEntry.place_counter1 = 0
         DefaultSetEntry.place_counter2 = 0
 
-def update_pitch_list(index):
+def update_pitch_list(index,pitch_list):
     global global_pitch_list,json_data
     try:
         index = int(index) - 1
@@ -223,18 +228,21 @@ def update_pitch_list(index):
             data_dict["Note-Value"] = [_ for _ in range(12)]
             counter = 0
             for item in PURE_NOTES:
-                data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+                data_dict["Note-Value"][counter] = [item, pitch_list[counter]]
                 counter += 1
             for item in OTHER_NOTES:
-                data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+                data_dict["Note-Value"][counter] = [item, pitch_list[counter]]
                 counter += 1
             json_data.append(data_dict)
-            global_pitch_list[index] = DefaultSetEntry.pitch
+            global_pitch_list[index] = pitch_list
             DefaultSetEntry.clear_values()
     except:
         print("\aIndex is not an int")
-        init_set_screen.save_entry.delete(0,END)
-        init_set_screen.save_entry.insert(0,'')
+        try:
+            init_set_screen.save_entry.delete(0,END)
+            init_set_screen.save_entry.insert(0,'')
+        except:
+            pass
 
 def init_set_screen():
     set_screen = Tk()
@@ -258,7 +266,7 @@ def init_set_screen():
     init_set_screen.save_entry.place(x=220, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get())).place(x=295, y=225)
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(),DefaultSetEntry.pitch)).place(x=295, y=225)
 
     set_screen.mainloop()
 
@@ -300,14 +308,17 @@ def add_to_pitch(value):
             # Update pitch value
             if button.get_saved_pitch() + value > 100:
                 threading.Thread(target=lambda: button.set_saved_pitch(100)).start()
+                threading.Thread(target=lambda: button.update_local_pitch() ).start()
                 button.change_entry_box(button.get_saved_pitch())
                 break
             elif button.get_saved_pitch() + value < -100:
                 threading.Thread(target=lambda: button.set_saved_pitch(-100)).start()
+                threading.Thread(target=lambda: button.update_local_pitch() ).start()
                 button.change_entry_box(button.get_saved_pitch())
                 break
             else:
                 threading.Thread(target=lambda: button.set_saved_pitch(button.get_saved_pitch() + value)).start()
+                threading.Thread(target=lambda: button.update_local_pitch() ).start()
                 threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
                 break
 
@@ -328,13 +339,13 @@ def default_labels():
     default_labels.pitch_text.place(x=290, y=260)
     default_labels.pitch_text.config(state=DISABLED)
 
-    # Pitch catch button    
-    # pitch_catch = Button(app, text="Pitch Catch", command=lambda: catch_pitch_value()).place(x=250, y=200)
+    # Save values button 
+    save_values = Button(app, text="Save Values", command=lambda: (update_pitch_list(1, NoteButton.pitch))).place(x=250, y=170)
 
     # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
     default_labels.current_note.config(state=DISABLED)
-    default_labels.current_note.place(x=265, y=213)
+    default_labels.current_note.place(x=260, y=213)
 
     # Adding buttons
     Button(app, text="-1", command=lambda: add_to_pitch(-1)).place(x=230, y=210)
@@ -377,6 +388,7 @@ def coming_note(msg):
                 if button.get_note_name() == NoteButton.last_pressed_note:
                     threading.Thread(target=lambda: button.set_saved_pitch(current_pitch) ).start()
                     threading.Thread(target=lambda: button.change_entry_box(current_pitch) ).start()
+                    threading.Thread(target=lambda: button.update_local_pitch() ).start()
                     break
         else:
             for item in global_button_list:
@@ -474,7 +486,7 @@ def port_select_screen():
     
     Label(port_screen, text="Output Port", font=("Arial",12,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
     outport_var = StringVar()
-    outport_var.set(outports[-2])
+    outport_var.set(outports[-1])
     outport_dropdown = OptionMenu(port_screen, outport_var, *outports)
     outport_dropdown.pack(side=TOP, pady=10)
 
