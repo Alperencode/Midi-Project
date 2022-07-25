@@ -259,14 +259,14 @@ def init_set_screen():
     
     # Save to label
     save_label = Label(set_screen, text="Save to",font=("Arial",15,"bold"))
-    save_label.place(x=220, y=175)
+    save_label.place(x=275, y=175)
     
     # Save to entry
     init_set_screen.save_entry = Entry(set_screen, width=10)
-    init_set_screen.save_entry.place(x=220, y=225)
+    init_set_screen.save_entry.place(x=280, y=225)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(),DefaultSetEntry.pitch)).place(x=295, y=225)
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(),DefaultSetEntry.pitch)).place(x=355, y=225)
 
     set_screen.mainloop()
 
