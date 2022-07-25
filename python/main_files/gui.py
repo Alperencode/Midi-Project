@@ -221,9 +221,14 @@ def update_pitch_list(index):
         else:
             data_dict = {}
             data_dict["Set-Number"] = index + 1
-            data_dict["Note-Value"] = [_ for _ in range(7)]
-            for counter,item in enumerate(PURE_NOTES):
+            data_dict["Note-Value"] = [_ for _ in range(12)]
+            counter = 0
+            for item in PURE_NOTES:
                 data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+                counter += 1
+            for item in OTHER_NOTES:
+                data_dict["Note-Value"][counter] = [item, DefaultSetEntry.pitch[counter]]
+                counter += 1
             json_data.append(data_dict)
             global_pitch_list[index] = DefaultSetEntry.pitch
             DefaultSetEntry.clear_values()
@@ -241,6 +246,8 @@ def init_set_screen():
 
     DefaultSetEntry.clear_values()
     for item in PURE_NOTES:
+        DefaultSetEntry(item,set_screen)
+    for item in OTHER_NOTES:
         DefaultSetEntry(item,set_screen)
     
     # Save to label
@@ -262,6 +269,11 @@ def set_default(set_number):
     counter = 0
     for button in global_button_list:
         if button.get_note_name() in PURE_NOTES:
+            button.set_saved_pitch(global_pitch_list[set_number][counter]) 
+            button.change_entry_box(global_pitch_list[set_number][counter])
+            counter += 1
+    for button in global_button_list:
+        if button.get_note_name() in OTHER_NOTES:
             button.set_saved_pitch(global_pitch_list[set_number][counter]) 
             button.change_entry_box(global_pitch_list[set_number][counter])
             counter += 1
