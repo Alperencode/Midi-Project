@@ -512,6 +512,9 @@ def main():
     about_menu = Menu(app_menu)
     app_menu.add_cascade(label="About", menu=about_menu)
     about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.0.1"))
+    information_menu = Menu(app_menu)
+    app_menu.add_cascade(label="Information", menu=information_menu)
+    information_menu.add_command(label="Information", command=lambda: messagebox.showinfo("Information", "This program requires to send one more midi signal after closing the program because of reading inport method.\n\nIf you cannot send another midi signal after closing program this program keeps running in background.\n\nIf you dont have any tool connected to send midi signal after closing program you can stop the program in task manager which is named 'gui.exe'"))
 
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
