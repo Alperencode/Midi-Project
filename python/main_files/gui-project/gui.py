@@ -507,6 +507,12 @@ def main():
     app.iconbitmap('piano.ico')
     app.protocol("WM_DELETE_WINDOW", close_program)
 
+    app_menu = Menu(app)
+    app.config(menu=app_menu)
+    about_menu = Menu(app_menu)
+    app_menu.add_cascade(label="About", menu=about_menu)
+    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.0.1"))
+
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
     NoteButton.label_counter = 0
