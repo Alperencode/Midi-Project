@@ -1,5 +1,6 @@
 from tkinter import *
 from music21 import *
+import mido.backends.rtmidi
 from tkinter import ttk,messagebox
 import mido,random,time,threading,math,json,os
 
@@ -468,13 +469,13 @@ def port_select_screen():
     port_screen.geometry("400x400+500+200")
     port_screen.configure(background='#2F4F4F')
     port_screen.iconbitmap('connect.ico')
-    port_screen.protocol("WM_DELETE_WINDOW", lambda: exit())
+    port_screen.protocol("WM_DELETE_WINDOW", lambda: sys.exit())
     
     outports = mido.get_output_names()
     inports = mido.get_input_names()
     if (not outports) or (not inports):
         messagebox.showerror("Error", "No open ports found")
-        exit()
+        sys.exit()
 
     Label(port_screen, text="Select Ports", font=("Arial",20,'bold'), bg='#2F4F4F', fg='white').pack(side=TOP, pady=10)
 
