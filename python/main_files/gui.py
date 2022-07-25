@@ -35,8 +35,7 @@ class NoteButton:
     last_pressed_note = None
     control_change = mido.Message('control_change', control=1, value=0)
     counter = 0
-    label_counter1 = 0
-    label_counter2 = 0
+    label_counter = 0
     placement = [0,85,170,255,340,425,510,65,150,320,405,490]
 
     def __init__(self,note_name,octave=5,velocity=64):
@@ -59,23 +58,23 @@ class NoteButton:
             width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
         
         if note_name in PURE_NOTES:
-            NoteButton.label_counter1 += 1.5
+            NoteButton.label_counter += 1.5
 
             label = Label(app, text=note_name)
-            label.place(x=10, y= 10 + (NoteButton.label_counter1 * 20))
+            label.place(x=10, y= 10 + (NoteButton.label_counter * 20))
 
             self.__entry_box = Entry(app, width=5)
 
-            self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter1 * 20))
+            self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
         else:
-            NoteButton.label_counter2 += 1.5
+            NoteButton.label_counter += 1.5
             label = Label(app, text=note_name)
-            label.place(x=100, y= 10 + (NoteButton.label_counter2 * 20))
+            label.place(x=100, y= 10 + (NoteButton.label_counter * 20))
 
             self.__entry_box = Entry(app, width=5)
 
-            self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter2 * 20))
+            self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
         button.place(x=NoteButton.placement[NoteButton.counter], y=300)
@@ -497,6 +496,7 @@ def main():
 
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
+    NoteButton.label_counter = 0
     for item in OTHER_NOTES:
         global_button_list.append(NoteButton(item))
 
