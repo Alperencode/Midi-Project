@@ -250,7 +250,7 @@ def init_set_screen():
     set_screen.title("Set Screen")
     set_screen.geometry("650x300")
     set_screen.resizable(False, False)
-    set_screen.iconbitmap('musical_score.ico')
+    set_screen.iconbitmap('icons/musical_score.ico')
 
     DefaultSetEntry.clear_values()
     for item in PURE_NOTES:
@@ -468,7 +468,7 @@ def port_select_screen():
     port_screen.title("Select Port")
     port_screen.geometry("400x400+500+200")
     port_screen.configure(background='#2F4F4F')
-    port_screen.iconbitmap('connect.ico')
+    port_screen.iconbitmap('icons/connect.ico')
     port_screen.protocol("WM_DELETE_WINDOW", lambda: sys.exit())
     
     outports = mido.get_output_names()
@@ -504,7 +504,7 @@ def main():
     app.title("GUI")
     app.geometry("600x500")
     app.resizable(False, False)
-    app.iconbitmap('piano.ico')
+    app.iconbitmap('icons/piano.ico')
     app.protocol("WM_DELETE_WINDOW", close_program)
 
     app_menu = Menu(app)
