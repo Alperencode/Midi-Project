@@ -1,8 +1,7 @@
 from tkinter import *
 from music21 import *
-import mido.backends.rtmidi
 from tkinter import ttk,messagebox
-import mido,random,time,threading,math,json,os
+import mido,random,time,threading,math,json,os,mido.backends.rtmidi
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -19,7 +18,6 @@ json_data = []
 # setting 8 default sets to values to 0
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0,0,0,0,0,0])
-
 
 def converter(value, control):
     # if control: pitch to cent
