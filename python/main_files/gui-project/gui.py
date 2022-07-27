@@ -1,3 +1,4 @@
+# Importing modules
 from tkinter import *
 from music21 import *
 from tkinter import ttk,messagebox
@@ -20,8 +21,10 @@ for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0,0,0,0,0,0])
 
 def converter(value, control):
-    # if control: pitch to cent
-    # else: cent to pitch
+    """ 
+    Range converter function to convert pitch value (-8192/8191) to cent value (-100/100)
+    control: True -> convert to cent value, False -> convert to pitch value
+    """
     if control:
         new_value = (((value - (-8192)) * 200) / 16383) + (-100)
     else:
@@ -29,16 +32,34 @@ def converter(value, control):
     return int(new_value)
 
 class NoteButton:
+    """
+    This is the main class of the program which is basically responsible for sending the midi messages to the midi output.
+    Detailed explanation has been provided in each function.
+    """
     global output,app
 
-    last_pressed_note = None
-    control_change = mido.Message('control_change', control=1, value=0)
+    # Static variables
+    # counter is used to keep track of the number of buttons created
+    # [label_counter and placement] are used to place the labels and entry boxes in the GUI
+    # last_pressed_note is used to keep track of the last pressed note
+    # control change is used to send control_change message with static method rather than assigning it to every note
+    # pitch list is used to save values when pressed 'save values' button 
     counter = 0
     label_counter = 0
+    last_pressed_note = None
+    control_change = mido.Message('control_change', control=1, value=0)
     placement = [0,85,170,255,340,425,510,65,150,320,405,490]
     pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
 
     def __init__(self,note_name,octave=5,velocity=64):
+        """
+        Initializing function of the class which takes 1 required argument and 2 optional arguments.
+        note_name: name of the note
+        octave: octave of the note
+        velocity: velocity of the note
+        What initiazlization do is basically making basic variable definitions, creating a pitch entry box and note button to GUI for each note, 
+        and keeping track of how many button was created 
+        """
         self.__note_name = note_name
         self.__pitch_value = 0
         self.__octave = octave
@@ -47,17 +68,22 @@ class NoteButton:
         self.__saved_pitch = 0
         self.__entry_box_number = NoteButton.counter
 
+        # buttons are used to trigger 3 basic events: send note_on, wait for 100 miliseconds and send note_off
+        # so command argument is used with lambda to trigger more than one function
         if note_name in PURE_NOTES:
+            # Making note button white if the note is a pure note
             button = Button(
             app,text=note_name,
             command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
             width=10,height=15,bg="white",fg="#241f1f",activebackground="white",activeforeground="#241f1f",font=("Arial", 10, "bold"))
         else:
+            # Making note button black if the note is not a pure note
             button = Button(
             app,text=note_name,
             command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
             width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
         
+        # Placing label (note text) and entry box in the GUI
         if note_name in PURE_NOTES:
             NoteButton.label_counter += 1.5
 
@@ -78,26 +104,34 @@ class NoteButton:
             self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
+        # placing button in the GUI
         button.place(x=NoteButton.placement[NoteButton.counter], y=300)
 
+        # incrementing counter
         NoteButton.counter += 1
 
     def update_local_pitch(self):
+        """Updating the local pitch list with the saved pitch value """
         NoteButton.pitch[self.__entry_box_number] = self.__saved_pitch
     
     def change_entry_box(self,*args):
-        if self.__entry_box != None:
-            if args:
-                self.__entry_box.delete(0,END)
-                self.__entry_box.insert(0,args[0])
-            else:
-                self.__entry_box.delete(0,END)
-                self.__entry_box.insert(0,self.get_pitch())
+        """
+        If used with any argument, it will change the entry box value to the argument value 
+        If not, it will change entry box to current pitch
+        """
+        if args:
+            self.__entry_box.delete(0,END)
+            self.__entry_box.insert(0,args[0])
+        else:
+            self.__entry_box.delete(0,END)
+            self.__entry_box.insert(0,self.get_pitch())
 
     def get_saved_pitch(self):
+        """Getter for saved pitch"""
         return self.__saved_pitch
 
     def set_saved_pitch(self,pitch):
+        """Setter for saved pitch"""
         try:
             pitch = int(pitch)
             if pitch > 100 or pitch < -100:
@@ -108,21 +142,27 @@ class NoteButton:
             self.setting_pitch_error("Pitch is not an int")
 
     def get_note_name(self):
+        """Getter for note name"""
         return self.__note_name
 
     def get_octave(self):
+        """Getter for octave"""
         return self.__octave
 
     def set_octave(self,octave):
+        """Setter for octave"""
         self.__octave = octave
 
     def set_velocity(self,velocity):
+        """Setter for velocity"""
         self.__velocity = velocity
 
     def get_velocity(self):
+        """Getter for velocity"""
         return self.__velocity
 
     def set_pitch(self,pitch):
+        """Setter for pitch"""
         try:
             pitch = int(pitch)
             if pitch > 100 or pitch < -100:
@@ -133,48 +173,77 @@ class NoteButton:
             self.setting_pitch_error("Pitch is not an int")
 
     def setting_pitch_error(self,error_message):
-            print(f"\a{error_message}")
-            self.__entry_box.delete(0,END)
-            self.__entry_box.insert(0,self.get_pitch())
+        """Printing passed error message and clearing entry box"""
+        print(f"\a{error_message}")
+        self.__entry_box.delete(0,END)
+        self.__entry_box.insert(0,self.get_pitch())
 
     def get_pitch(self):
+        """Getter for pitch"""
         return self.__pitch_value
 
     def send_note_on(self):
+        """
+        Core function to send note_on message to the midi device.
+        It will send note_on message with the current pitch and velocity,
+        Change the label under the info,
+        Send control_change message (?)
+        """
+
         NoteButton.last_pressed_note = self.get_note_name()
         output.send( NoteButton.control_change )
 
-        if len(self.get_note_name()) == 1:
+        # label will put an extra space if note is a pure note
+        if len(self.get_note_name()) in PURE_NOTES:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
 
+        # sending midi signal
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
     def send_pitch_wheel(self):
+        """Sending converted pitch value to the midi device"""
         sending_value = converter(self.get_pitch(), False)
         output.send( mido.Message('pitchwheel', pitch=sending_value) )
 
     def send_note_off(self):
+        """Sending note_off message to the midi device"""
         output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
         output.send( NoteButton.control_change )
 
     @staticmethod
     def change_control():
+        """Sending control_change message to the midi device"""
         output.send(NoteButton.control_change)
 
 class DefaultSetEntry:
+    """
+    Its a class to create and control values of set screen entry boxes.
+    It checks if entered values are valid or not,
+    has a pitch list to store the pitch values,
+    """
+
+    # Static variables
+    # general_counter is used to keep track of the number of entries created
+    # [place_counter1 and place_counter2] are used to place the labels and entry boxes in the GUI
+    # pitch list is used to store the pitch values for current screen
     pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
     general_counter = 0
 
     place_counter1 = 0
     place_counter2 = 0
     def __init__(self,note_name,set_screen):
-        self.__entry_box = None
+        """
+        Takes note_name and screen to display as arguments
+        Creating entry box and label for the set screen,
+        Setting entry index with the general counter,
+        """
         self.__note_name = note_name
         self.__entry_box_number = DefaultSetEntry.general_counter
-
         self.__entry_box = Entry(set_screen, width=5)
+
+        # this statement is used to place 2 entry boxes in a column
         if DefaultSetEntry.general_counter%2==0:
             Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter1*100), y=50 )
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=50)
@@ -184,16 +253,20 @@ class DefaultSetEntry:
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
             DefaultSetEntry.place_counter2 += 1
         
+        # binding enter key to entry 
         self.__entry_box.bind('<Return>', lambda event: self.set_pitch(self.__entry_box.get()))
 
+        # incrementing general_counter
         DefaultSetEntry.general_counter += 1
 
     def setting_pitch_error(self,error_message):
-            print(f"\a{error_message}")
-            self.__entry_box.delete(0,END)
-            self.__entry_box.insert(0,self.get_pitch())
+        """Printing passed error message and clearing entry box"""
+        print(f"\a{error_message}")
+        self.__entry_box.delete(0,END)
+        self.__entry_box.insert(0,self.get_pitch())
 
     def set_pitch(self,pitch):
+        """Setter for pitch"""
         try:
             pitch = int(pitch)
             if pitch > 100 or pitch < -100:
@@ -204,16 +277,22 @@ class DefaultSetEntry:
             self.setting_pitch_error("Pitch is not an int")
 
     def get_pitch(self):
+        """Getter for pitch"""
         return DefaultSetEntry.pitch[self.__entry_box_number]    
 
     @staticmethod
     def clear_values():
+        """Reverting all class static variables to initial values"""
         DefaultSetEntry.general_counter = 0
         DefaultSetEntry.pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
         DefaultSetEntry.place_counter1 = 0
         DefaultSetEntry.place_counter2 = 0
 
 def update_pitch_list(index,pitch_list):
+    """
+    Updating global pitch list with passed argument,
+    Updating json data with the new pitch list 
+    """
     global global_pitch_list,json_data
     try:
         index = int(index) - 1
@@ -244,6 +323,7 @@ def update_pitch_list(index,pitch_list):
             pass
 
 def init_set_screen():
+    """Initializing set screen and its widgets"""
     set_screen = Tk()
     set_screen.title("Set Screen")
     set_screen.geometry("650x300")
@@ -270,6 +350,7 @@ def init_set_screen():
     set_screen.mainloop()
 
 def set_default(set_number):
+    """Setting default values according passed set number"""
     global global_pitch_list,global_button_list
 
     counter = 0
@@ -285,9 +366,12 @@ def set_default(set_number):
             counter += 1
 
 def catch_pitch_value():
+    """
+    Catching current pitch value coming from the midi device using global current_pitch value
+    and updates text widget from default_labels function
+    """
     global current_pitch
 
-    # Update current pitch text
     text_widget = default_labels.pitch_text
     text_widget.config(state=NORMAL)
     text_widget.delete(1.0, END)
@@ -295,6 +379,7 @@ def catch_pitch_value():
     text_widget.config(state=DISABLED)
 
 def add_to_pitch(value):
+    """adding/subtracting passed value to last pressed button's pitch value"""
     text_widget = default_labels.current_note
     for button in global_button_list:
         if button.get_note_name() == NoteButton.last_pressed_note:
@@ -305,23 +390,20 @@ def add_to_pitch(value):
             text_widget.config(state=DISABLED)
             
             # Update pitch value
+            new_value = 0
             if button.get_saved_pitch() + value > 100:
-                threading.Thread(target=lambda: button.set_saved_pitch(100)).start()
-                threading.Thread(target=lambda: button.update_local_pitch() ).start()
-                button.change_entry_box(button.get_saved_pitch())
-                break
+                new_value = 100
             elif button.get_saved_pitch() + value < -100:
-                threading.Thread(target=lambda: button.set_saved_pitch(-100)).start()
-                threading.Thread(target=lambda: button.update_local_pitch() ).start()
-                button.change_entry_box(button.get_saved_pitch())
-                break
+                new_value = -100
             else:
-                threading.Thread(target=lambda: button.set_saved_pitch(button.get_saved_pitch() + value)).start()
-                threading.Thread(target=lambda: button.update_local_pitch() ).start()
-                threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
-                break
+                new_value = button.get_saved_pitch() + value
+            threading.Thread(target=lambda: button.set_saved_pitch(new_value)).start()
+            threading.Thread(target=lambda: button.update_local_pitch() ).start()
+            threading.Thread(target=lambda: button.change_entry_box(button.get_saved_pitch())).start()
+            break
 
 def default_labels():
+    """Initializing default labels and their widgets and displaying to main app"""
     global app,global_button_list
     
     # Info label
@@ -363,26 +445,43 @@ def default_labels():
         else:
             button = Button(app, text=f"{i+1}", command=lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
 
+    # Setting menu
+    app_menu = Menu(app)
+    app.config(menu=app_menu)
+    about_menu = Menu(app_menu)
+    app_menu.add_cascade(label="About", menu=about_menu)
+    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.0.2"))
+    information_menu = Menu(app_menu)
+    app_menu.add_cascade(label="Information", menu=information_menu)
+    information_menu.add_command(label="Information", command=lambda: messagebox.showinfo("Information", "This program requires to send one more midi signal after closing the program because of reading inport method.\n\nIf you cannot send another midi signal after closing program this program keeps running in background.\n\nIf you dont have any tool connected to send midi signal after closing program you can stop the program in task manager which is named 'gui.exe'"))
+
     save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
 def note_to_number(note: str, octave: int):
+    """Converting passed note name and octave to Midi note number"""
     note = NOTES.index(note) + 4
     note += (12 * octave)
 
     return note-16
 
 def number_to_note(number: int):
-    
+    """Converting passed Midi note number to note name and octave""" 
     note = NOTES[(number % 12)-4]
     octave = math.floor((number+8)/12)
 
     return [note, octave]
 
 def coming_note(msg):
+    """
+    Core function for configuring incoming midi messages,
+    processes the incoming midi message and takes action according to message type.
+    Then it runs the necessary methods with threads depending on the message
+    """
     global current_pitch,global_button_list
 
     if msg.type == 'note_on':
         if msg.note == 36:
+            # If coming note is C3 (first note), save pitch value
             for button in global_button_list:
                 if button.get_note_name() == NoteButton.last_pressed_note:
                     threading.Thread(target=lambda: button.set_saved_pitch(current_pitch) ).start()
@@ -396,8 +495,10 @@ def coming_note(msg):
                 if item.get_note_name() == note[0]:
                     threading.Thread(target=lambda: item.set_octave(note[1]) ).start()
                     if current_pitch == 0:
+                        # if current_pitch is 0, use the saved pitch value
                         threading.Thread(target=lambda: item.set_pitch(item.get_saved_pitch())).start()
                     else:
+                        # else use the current pitch value
                         threading.Thread(target=lambda: item.set_pitch(current_pitch)).start()
                     threading.Thread(target=lambda: item.set_octave(note[1]) ).start()
                     threading.Thread(target=lambda: item.send_pitch_wheel()).start()
@@ -430,6 +531,10 @@ def coming_note(msg):
         threading.Thread(target=lambda: NoteButton.change_control()).start()
 
 def close_program():
+    """
+    Closes the program and saves json data if there is any.
+    This function is also checking if there is any json file created to prevent overriding the old file.
+    """
     global app,note_bool,json_data
     if json_data:
         files = os.listdir()
@@ -445,8 +550,12 @@ def close_program():
     note_bool = False
 
 def read_inport():
+    """Reads incoming midi messages and sends them to coming_note function to configure the message"""
     global note_bool
     while note_bool:
+        # receive function blocking the program until a message is received this is why program doesn't close without sending one more message
+        # It can be used with block=False argument to receive messages without blocking the program but that is not recommended
+        # Because it will keep reading inport non-stop and use a lot of CPU power
         msg = inport.receive()
         if note_bool:
             if msg.type in MESSAGE_TYPES:
@@ -454,12 +563,14 @@ def read_inport():
         else:
             break
 
-def connect_ports(port1, port2):
+def connect_ports(_inport, _outport):
+    """Connects the midi inport and outport"""
     global inport,output
-    inport = mido.open_input(port1)
-    output = mido.open_output(port2)
+    inport = mido.open_input(_inport)
+    output = mido.open_output(_outport)
 
 def port_select_screen():
+    """Initializing the port selection screen"""
     global inport,output
 
     port_screen = Tk()
@@ -496,8 +607,10 @@ def port_select_screen():
 def main():
     global app,global_button_list
     
+    # Initializing the port selection window
     port_select_screen()
 
+    # Initializing the main window
     app = Tk()
     app.title("GUI")
     app.geometry("600x500")
@@ -505,22 +618,17 @@ def main():
     app.iconbitmap('icons/piano.ico')
     app.protocol("WM_DELETE_WINDOW", close_program)
 
-    app_menu = Menu(app)
-    app.config(menu=app_menu)
-    about_menu = Menu(app_menu)
-    app_menu.add_cascade(label="About", menu=about_menu)
-    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.0.2"))
-    information_menu = Menu(app_menu)
-    app_menu.add_cascade(label="Information", menu=information_menu)
-    information_menu.add_command(label="Information", command=lambda: messagebox.showinfo("Information", "This program requires to send one more midi signal after closing the program because of reading inport method.\n\nIf you cannot send another midi signal after closing program this program keeps running in background.\n\nIf you dont have any tool connected to send midi signal after closing program you can stop the program in task manager which is named 'gui.exe'"))
-
+    # creating the note buttons
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
     NoteButton.label_counter = 0
     for item in OTHER_NOTES:
         global_button_list.append(NoteButton(item))
 
+    # Initializing the main window label and widgets
     default_labels()
+
+    # Starting to read inport
     threading.Thread(target=lambda: read_inport()).start()
 
     app.mainloop()
