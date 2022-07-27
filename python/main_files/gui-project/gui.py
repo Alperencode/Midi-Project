@@ -104,10 +104,10 @@ class NoteButton:
             self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
-        # placing button in the GUI
+        # Placing button in the GUI
         button.place(x=NoteButton.placement[NoteButton.counter], y=300)
 
-        # incrementing counter
+        # Incrementing counter
         NoteButton.counter += 1
 
     def update_local_pitch(self):
@@ -193,13 +193,13 @@ class NoteButton:
         NoteButton.last_pressed_note = self.get_note_name()
         output.send( NoteButton.control_change )
 
-        # label will put an extra space if note is a pure note
-        if len(self.get_note_name()) in PURE_NOTES:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with  \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
+        # Label will put an extra space if note is a pure note
+        if self.get_note_name() in PURE_NOTES:
+            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()}  with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
             Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
 
-        # sending midi signal
+        # Sending midi signal
         output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
     def send_pitch_wheel(self):
@@ -243,7 +243,7 @@ class DefaultSetEntry:
         self.__entry_box_number = DefaultSetEntry.general_counter
         self.__entry_box = Entry(set_screen, width=5)
 
-        # this statement is used to place 2 entry boxes in a column
+        # This statement is used to place 2 entry boxes in a column
         if DefaultSetEntry.general_counter%2==0:
             Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter1*100), y=50 )
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=50)
@@ -253,10 +253,10 @@ class DefaultSetEntry:
             self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
             DefaultSetEntry.place_counter2 += 1
         
-        # binding enter key to entry 
+        # Binding enter key to entry 
         self.__entry_box.bind('<Return>', lambda event: self.set_pitch(self.__entry_box.get()))
 
-        # incrementing general_counter
+        # Incrementing general_counter
         DefaultSetEntry.general_counter += 1
 
     def setting_pitch_error(self,error_message):
@@ -618,7 +618,7 @@ def main():
     app.iconbitmap('icons/piano.ico')
     app.protocol("WM_DELETE_WINDOW", close_program)
 
-    # creating the note buttons
+    # Creating the note buttons
     for item in PURE_NOTES:
         global_button_list.append(NoteButton(item))
     NoteButton.label_counter = 0
