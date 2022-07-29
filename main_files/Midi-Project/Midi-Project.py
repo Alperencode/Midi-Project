@@ -12,9 +12,9 @@ MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
 OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 global_button_list = []
 global_pitch_list = []
+json_data = []
 current_pitch = 0
 note_bool = True
-json_data = []
 
 # setting 8 default sets to values to 0
 for _ in range(8):
@@ -42,14 +42,14 @@ class NoteButton:
     # counter is used to keep track of the number of buttons created
     # [label_counter and placement] are used to place the labels and entry boxes in the GUI
     # last_pressed_note is used to keep track of the last pressed note
-    # control change is used to send control_change message with static method rather than assigning it to every note
     # pitch list is used to save values when pressed 'save values' button 
+    # control change is used to send control_change message with static method rather than assigning it to every note
     counter = 0
     label_counter = 0
     last_pressed_note = None
-    control_change = mido.Message('control_change', control=1, value=0)
     placement = [0,85,170,255,340,425,510,65,150,320,405,490]
     pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
+    control_change = mido.Message('control_change', control=1, value=0)
 
     def __init__(self,note_name,octave=5,velocity=64):
         """
@@ -61,12 +61,12 @@ class NoteButton:
         and keeping track of how many button was created 
         """
         self.__note_name = note_name
-        self.__pitch_value = 0
         self.__octave = octave
         self.__velocity = velocity
-        self.__entry_box = None
+        self.__pitch_value = 0
         self.__saved_pitch = 0
         self.__entry_box_number = NoteButton.counter
+        self.__entry_box = None
 
         # buttons are used to trigger 3 basic events: send note_on, wait for 100 miliseconds and send note_off
         # so command argument is used with lambda to trigger more than one function
@@ -91,16 +91,15 @@ class NoteButton:
             label.place(x=10, y= 10 + (NoteButton.label_counter * 20))
 
             self.__entry_box = Entry(app, width=5)
-
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
         else:
             NoteButton.label_counter += 1.5
+
             label = Label(app, text=note_name)
             label.place(x=100, y= 10 + (NoteButton.label_counter * 20))
 
             self.__entry_box = Entry(app, width=5)
-
             self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
@@ -219,20 +218,20 @@ class NoteButton:
 
 class DefaultSetEntry:
     """
-    Its a class to create and control values of set screen entry boxes.
+    This class allows to create and control values of set screen entry boxes.
     It checks if entered values are valid or not,
     has a pitch list to store the pitch values,
     """
 
     # Static variables
     # general_counter is used to keep track of the number of entries created
-    # [place_counter1 and place_counter2] are used to place the labels and entry boxes in the GUI
     # pitch list is used to store the pitch values for current screen
-    pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
+    # [place_counter1 and place_counter2] are used to place the labels and entry boxes in the GUI
     general_counter = 0
-
+    pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
     place_counter1 = 0
     place_counter2 = 0
+
     def __init__(self,note_name,set_screen):
         """
         Takes note_name and screen to display as arguments
