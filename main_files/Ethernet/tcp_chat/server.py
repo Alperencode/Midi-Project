@@ -1,34 +1,69 @@
-# Didn't complete yet
 import socket,threading
+FORMAT = 'utf-8'
 
 class Client(threading.Thread):
-    connections = []
-    _id = 0
+    active = 0
+    clients = []
 
-    def __init__(self, socket, address):
-        self.__socket = socket
-        self.__address = address
+    def __init__(self, server, socket, address, name):
+        threading.Thread.__init__(self)
+        self.server = server
+        self.socket = socket
+        self.address = address
+        self.name = name
+        self._id = Client.active + 1
 
-        _id += 1
+        Client.active += 1
+    
+    def run(self):
+        connected = True
+        while connected:
+            msg = self.socket.recv(1024).decode(FORMAT)
+            if msg.lower() == "!disconnect":
+                connected = False
+                self.disconnect()
+                break
+            for client in Client.clients:
+                if client._id != self._id:
+                    client.socket.sendall(f"{self.name}: {msg}".encode(FORMAT))
+            print(f"{self.name}: {msg}")
 
+    def disconnect(self):
+        Client.active -= 1
+        for client in Client.clients:
+            client.socket.sendall(f"{self.name} has disconnected! (Active {Client.active})".encode(FORMAT))
+        print(f"{self.name} has disconnected! (Active {Client.active})")
+        self.socket.close()
+        Client.clients.remove(self)
 
 def read_inport(server):
     while True:
         client, addr = server.accept()
-        Client.connections.append(Client(client, addr))
-        client.send(f"You are connected to chat with {Client._id} id".encode('utf-8'))
+        client.sendall(f"You are connected to chat. Type !disconnect to close the chat\nPlease enter nickname".encode(FORMAT))
+        name = client.recv(1024).decode(FORMAT)
+
+        c = Client(server, client, addr, name)
+        c.start()
+        Client.clients.append(c)
+        print(f"{name} has connected to chat! (Active: {Client.active})")
+
+        for client in Client.clients:
+            client.socket.sendall(f"{name} has connected to chat! (Active: {Client.active})".encode(FORMAT))
 
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    host = input("Host IP (default is localhost): ")
-    if host == "": host = "localhost"
+    host = socket.gethostbyname(socket.gethostname())
+    port = input("Port (default is 9090): ")
+    if port == "": port = 9090
 
-    port = int(input("Port (default is 9090): "))
-    if port == 0: port = 9090
+    server.bind((host, int(port)))
+    server.listen()
+    print(f"Chat is started on {host}:{port}!")
 
-    server.bind((host, port))
-    server.listen(5)
+    while True:
+        threading.Thread(target= lambda: read_inport(server)).start()
 
-
+if __name__ == '__main__':
+    main()
