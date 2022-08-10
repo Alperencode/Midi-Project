@@ -1,4 +1,4 @@
-# This program created for checking midi signals and trying their attributes to develop gui.py
+# This program was created for checking midi signals and trying their attributes to develop Midi-Project
 from music21 import *
 import pygame,mido,math
 
