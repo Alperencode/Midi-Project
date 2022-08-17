@@ -18,15 +18,20 @@ class Client(threading.Thread):
     def run(self):
         connected = True
         while connected:
-            msg = self.socket.recv(1024).decode(FORMAT)
-            if msg.lower() == "!disconnect":
+            try:
+                msg = self.socket.recv(1024).decode(FORMAT)
+                if msg.lower() == "!disconnect":
+                    connected = False
+                    self.disconnect()
+                    break
+                for client in Client.clients:
+                    if client._id != self._id:
+                        client.socket.sendall(f"{self.name}: {msg}".encode(FORMAT))
+                print(f"{self.name}: {msg}")
+            except:
                 connected = False
                 self.disconnect()
                 break
-            for client in Client.clients:
-                if client._id != self._id:
-                    client.socket.sendall(f"{self.name}: {msg}".encode(FORMAT))
-            print(f"{self.name}: {msg}")
 
     def disconnect(self):
         Client.active -= 1

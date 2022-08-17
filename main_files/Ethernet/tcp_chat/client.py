@@ -5,8 +5,7 @@ FORMAT = ('utf-8')
 def receive(socket):
     while CONNECTED:
         msg = socket.recv(1024).decode(FORMAT)
-        if msg != "":
-            print(msg+"\n> ", end="")
+        if msg != "": print(f"\n{msg}\n")
 
 def main():
     global CONNECTED
@@ -28,8 +27,8 @@ def main():
     receive_thread.start()
 
     while CONNECTED:
-        msg = input("> ")
-        server.send(msg.encode(FORMAT))
+        msg = input("")
+        if msg != "": server.send(msg.encode(FORMAT))
         if msg.lower() == "!disconnect":
             CONNECTED = False
             receive_thread.join()

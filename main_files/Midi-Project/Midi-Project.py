@@ -2,7 +2,7 @@
 from tkinter import *
 from music21 import *
 from tkinter import ttk,messagebox
-import mido,random,time,threading,math,json,os,mido.backends.rtmidi
+import mido,time,threading,math,json,os,mido.backends.rtmidi
 
 # Global variables
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
