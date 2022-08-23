@@ -57,8 +57,8 @@ class NoteButton:
         note_name: name of the note
         octave: octave of the note
         velocity: velocity of the note
-        What initiazlization do is basically making basic variable definitions, creating a pitch entry box and note button to GUI for each note, 
-        and keeping track of how many button was created 
+        Initializing is making basic variable definitions, creating a pitch entry box and note button to GUI for each note, 
+        and keeping track of how many buttons was created 
         """
         self.__note_name = note_name
         self.__octave = octave
