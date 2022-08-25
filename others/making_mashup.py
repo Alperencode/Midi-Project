@@ -2,7 +2,7 @@ import os
 
 from mido import MidiFile
 
-cv1 = MidiFile('new_song.mid', clip=True)
+cv1 = MidiFile('VampireKillerCV1.mid', clip=True)
 cv3 = MidiFile('MIDI_sample.mid', clip=True)
 
 del cv1.tracks[4]
