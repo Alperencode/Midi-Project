@@ -1,3 +1,6 @@
+# @author: https://github.com/Alperencode 
+# @date: 01 Aug 2022
+
 # Importing modules
 from tkinter import *
 from music21 import *
