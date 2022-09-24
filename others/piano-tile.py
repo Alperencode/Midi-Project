@@ -1,4 +1,7 @@
-# This program was created for checking midi signals and trying their attributes to develop Midi-Project
+# Source: https://www.youtube.com/watch?v=w732EXqmfZU&ab_channel=SatelliteMusic
+
+# This program used for checking Midi signals and trying their attributes to develop Midi-Project
+
 from music21 import *
 import pygame,mido,math
 
