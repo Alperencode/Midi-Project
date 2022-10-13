@@ -1,0 +1,5 @@
+NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
+OTHER_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#']
+MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
+OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

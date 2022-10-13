@@ -1,18 +1,11 @@
 # @author: https://github.com/Alperencode 
 # @date: 01 Aug 2022
+# @last update: 13 Oct 2022
 
-# Importing modules
-from tkinter import *
-from music21 import *
-from tkinter import ttk,messagebox
-import mido,time,threading,math,json,os,mido.backends.rtmidi
+# Importing midi directory
+from midi import *
 
 # Global variables
-NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-PURE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] 
-OTHER_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#']
-MESSAGE_TYPES = ['note_on','note_off','pitchwheel','control_change']
-OCTAVES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 global_button_list = []
 global_pitch_list = []
 json_data = []
@@ -23,23 +16,11 @@ note_bool = True
 for _ in range(8):
     global_pitch_list.append([0,0,0,0,0,0,0,0,0,0,0,0])
 
-def converter(value, control):
-    """ 
-    Range converter function to convert pitch value (-8192/8191) to cent value (-100/100)
-    control: True -> convert to cent value, False -> convert to pitch value
-    """
-    if control:
-        new_value = (((value - (-8192)) * 200) / 16383) + (-100)
-    else:
-        new_value = (((value - (-100)) * 16383) / 200) + (-8192)
-    return int(new_value)
-
 class NoteButton:
     """
     This is the main class of the program which is basically responsible for sending the midi messages to the midi output.
     Detailed explanation has been provided in each function.
     """
-    global output,app
 
     # Static variables
     # counter is used to keep track of the number of buttons created
@@ -54,7 +35,7 @@ class NoteButton:
     pitch = [0,0,0,0,0,0,0,0,0,0,0,0]
     control_change = mido.Message('control_change', control=1, value=0)
 
-    def __init__(self,note_name,octave=5,velocity=64):
+    def __init__(self,note_name,octave=5,velocity=64,output=None, app=None):
         """
         Initializing function of the class which takes 1 required argument and 2 optional arguments.
         note_name: name of the note
@@ -70,39 +51,41 @@ class NoteButton:
         self.__saved_pitch = 0
         self.__entry_box_number = NoteButton.counter
         self.__entry_box = None
+        self.output = output
+        self.app = app
 
         # buttons are used to trigger 3 basic events: send note_on, wait for 100 miliseconds and send note_off
         # so command argument is used with lambda to trigger more than one function
         if note_name in PURE_NOTES:
             # Making note button white if the note is a pure note
             button = Button(
-            app,text=note_name,
-            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            self.app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.set_velocity(64), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
             width=10,height=15,bg="white",fg="#241f1f",activebackground="white",activeforeground="#241f1f",font=("Arial", 10, "bold"))
         else:
             # Making note button black if the note is not a pure note
             button = Button(
-            app,text=note_name,
-            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
+            self.app,text=note_name,
+            command = lambda: (self.set_pitch(self.get_saved_pitch()), self.set_velocity(64),self.send_note_on(), self.send_pitch_wheel() , time.sleep(0.1), self.send_note_off()),
             width=4,height=7,bg="#241f1f",fg="white",activebackground="#241f1f",activeforeground="white",font=("Arial", 10, "bold"))
         
         # Placing label (note text) and entry box in the GUI
         if note_name in PURE_NOTES:
             NoteButton.label_counter += 1.5
 
-            label = Label(app, text=note_name)
+            label = Label(self.app, text=note_name)
             label.place(x=10, y= 10 + (NoteButton.label_counter * 20))
 
-            self.__entry_box = Entry(app, width=5)
+            self.__entry_box = Entry(self.app, width=5)
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
         else:
             NoteButton.label_counter += 1.5
 
-            label = Label(app, text=note_name)
+            label = Label(self.app, text=note_name)
             label.place(x=100, y= 10 + (NoteButton.label_counter * 20))
 
-            self.__entry_box = Entry(app, width=5)
+            self.__entry_box = Entry(self.app, width=5)
             self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
             self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
 
@@ -193,29 +176,29 @@ class NoteButton:
         """
 
         NoteButton.last_pressed_note = self.get_note_name()
-        output.send( NoteButton.control_change )
+        self.output.send( NoteButton.control_change )
 
         # Label will put an extra space if note is a pure note
         if self.get_note_name() in PURE_NOTES:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()}  with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
+            Label(self.app, text=f"Sending {self.get_note_name()} octave {self.get_octave()}  with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
         else:
-            Label(app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
+            Label(self.app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
 
         # Sending midi signal
-        output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        self.output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
     
     def send_pitch_wheel(self):
         """Sending converted pitch value to the midi device"""
         sending_value = converter(self.get_pitch(), False)
-        output.send( mido.Message('pitchwheel', pitch=sending_value) )
+        self.output.send( mido.Message('pitchwheel', pitch=sending_value) )
 
     def send_note_off(self):
         """Sending note_off message to the midi device"""
-        output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
-        output.send( NoteButton.control_change )
+        self.output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        self.output.send( NoteButton.control_change )
 
     @staticmethod
-    def change_control():
+    def change_control(output):
         """Sending control_change message to the midi device"""
         output.send(NoteButton.control_change)
 
@@ -461,20 +444,6 @@ def default_labels():
 
     save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
 
-def note_to_number(note: str, octave: int):
-    """Converting passed note name and octave to Midi note number"""
-    note = NOTES.index(note) + 4
-    note += (12 * octave)
-
-    return note-16
-
-def number_to_note(number: int):
-    """Converting passed Midi note number to note name and octave""" 
-    note = NOTES[(number % 12)-4]
-    octave = math.floor((number+8)/12)
-
-    return [note, octave]
-
 def coming_note(msg):
     """
     Core function for configuring incoming midi messages,
@@ -532,7 +501,7 @@ def coming_note(msg):
                 break
     elif msg.type == 'control_change':
         NoteButton.control_change = msg
-        threading.Thread(target=lambda: NoteButton.change_control()).start()
+        threading.Thread(target=lambda: NoteButton.change_control(output)).start()
 
 def close_program():
     """
@@ -540,16 +509,8 @@ def close_program():
     This function is also checking if there is any json file created to prevent overriding the old file.
     """
     global app,note_bool,json_data
-    if json_data:
-        files = os.listdir()
-        json_files = [f for f in files if f.endswith('.json')]
-        if json_files:
-            last_number = int((json_files[-1].split(".")[0])[-1])
-            with open(f"pitch_data{last_number+1}.json", "w") as fp:
-                json.dump(json_data, fp, indent=4)
-        else:
-            with open(f"pitch_data1.json", "w") as fp:
-                json.dump(json_data, fp, indent=4)
+    
+    save_json(json_data)
     app.destroy()
     note_bool = False
 
@@ -609,7 +570,7 @@ def port_select_screen():
     port_screen.mainloop()
 
 def main():
-    global app,global_button_list
+    global app,global_button_list,output
     
     # Initializing the port selection window
     port_select_screen()
@@ -624,10 +585,10 @@ def main():
 
     # Creating the note buttons
     for item in PURE_NOTES:
-        global_button_list.append(NoteButton(item))
+        global_button_list.append(NoteButton(item,output= output, app=app))
     NoteButton.label_counter = 0
     for item in OTHER_NOTES:
-        global_button_list.append(NoteButton(item))
+        global_button_list.append(NoteButton(item, output= output, app=app))
 
     # Initializing the main window label and widgets
     default_labels()
