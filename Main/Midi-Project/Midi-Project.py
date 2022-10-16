@@ -1,6 +1,6 @@
 # @author: https://github.com/Alperencode 
 # @date: 01 Aug 2022
-# @last update: 13 Oct 2022
+# @last update: 22 Oct 2022
 
 # Importing midi directory
 from midi import *
@@ -78,7 +78,7 @@ class NoteButton:
 
             self.__entry_box = Entry(self.app, width=5)
             self.__entry_box.place(x=50, y= 10 + (NoteButton.label_counter * 20))
-            self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
+            self.__entry_box.bind('<Return>', lambda event: (self.set_saved_pitch(self.__entry_box.get()), self.update_local_pitch()))
         else:
             NoteButton.label_counter += 1.5
 
@@ -87,7 +87,7 @@ class NoteButton:
 
             self.__entry_box = Entry(self.app, width=5)
             self.__entry_box.place(x=130, y= 10 + (NoteButton.label_counter * 20))
-            self.__entry_box.bind('<Return>', lambda event: self.set_saved_pitch(self.__entry_box.get()))
+            self.__entry_box.bind('<Return>', lambda event: (self.set_saved_pitch(self.__entry_box.get()), self.update_local_pitch()))
 
         # Placing button in the GUI
         button.place(x=NoteButton.placement[NoteButton.counter], y=300)
@@ -185,8 +185,11 @@ class NoteButton:
             Label(self.app, text=f"Sending {self.get_note_name()} octave {self.get_octave()} with \n{self.__pitch_value} pitch and {self.get_velocity()} velocity",font=("Arial",12,"bold")).place(x=200, y=40)
 
         # Sending midi signal
-        self.output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
-    
+        try:
+            self.output.send( mido.Message('note_on', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        except:
+            print("\aInvalid note")
+
     def send_pitch_wheel(self):
         """Sending converted pitch value to the midi device"""
         sending_value = converter(self.get_pitch(), False)
@@ -194,7 +197,10 @@ class NoteButton:
 
     def send_note_off(self):
         """Sending note_off message to the midi device"""
-        self.output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        try:
+            self.output.send( mido.Message('note_off', note=note_to_number(self.get_note_name(), self.get_octave()), velocity=self.get_velocity()) )
+        except:
+            print("\aInvalid note")
         self.output.send( NoteButton.control_change )
 
     @staticmethod
