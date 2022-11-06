@@ -1,6 +1,6 @@
 # @author: https://github.com/Alperencode 
 # @date: 01 Aug 2022
-# @last update: 22 Oct 2022
+# @last update: 13 Oct 2022
 
 # Importing midi directory
 from midi import *
@@ -441,7 +441,7 @@ def default_labels():
     app.config(menu=app_menu)
     about_menu = Menu(app_menu)
     app_menu.add_cascade(label="About", menu=about_menu)
-    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.1.0"))
+    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.1.1"))
     
     # Information menu
     information_menu = Menu(app_menu)
