@@ -47,10 +47,10 @@ You can download the latest release of the Midi GUI program from the [Releases](
 $ git clone https://github.com/Alperencode/Lemona-Science.git
 ```
 
-2. Navigate to the "Midi-Project" directory
+2. Navigate to the repository directory
 
 ```bash
-$ cd Lemona-Science/Midi-Project
+$ cd Lemona-Science
 ```
 
 3. Install the required packages
@@ -59,7 +59,13 @@ $ cd Lemona-Science/Midi-Project
 $ pip install -r requirements.txt
 ```
 
-4. Run the program
+4. Navigate to the "Midi-Project" directory
+
+```bash
+$ cd Midi-Project
+```
+
+5. Run the program
 
 ```bash
 $ python Midi-Project.py
