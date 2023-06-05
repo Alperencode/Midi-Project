@@ -236,12 +236,12 @@ class DefaultSetEntry:
 
         # This statement is used to place 2 entry boxes in a column
         if DefaultSetEntry.general_counter%2==0:
-            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter1*100), y=50 )
-            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=50)
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter1*100), y=70 )
+            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter1*100), y=70)
             DefaultSetEntry.place_counter1 += 1
         else:
-            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter2*100), y=100 )
-            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=100)
+            Label(set_screen, text=f"{self.__note_name} :",font=("Arial",12,"bold")).place(x=40 + (DefaultSetEntry.place_counter2*100), y=120 )
+            self.__entry_box.place(x=80 + (DefaultSetEntry.place_counter2*100), y=120)
             DefaultSetEntry.place_counter2 += 1
         
         # Binding enter key to entry 
@@ -316,10 +316,21 @@ def update_pitch_list(index,pitch_list):
 def init_set_screen():
     """Initializing set screen and its widgets"""
     set_screen = Tk()
-    set_screen.title("Set Screen")
+    set_screen.title("New Pitch Set Screen")
     set_screen.geometry("650x300")
     set_screen.resizable(False, False)
     set_screen.iconbitmap('icons/musical_score.ico')
+
+    # Set Information menu
+    set_screen_menu = Menu(set_screen)
+    set_screen.config(menu=set_screen_menu)
+    information_menu = Menu(set_screen_menu)
+    set_screen_menu.add_cascade(label="Set Information", menu=information_menu)
+    information_menu.add_command(label="Set Information", command=lambda: messagebox.showinfo("Set Information", "To set pitch values, press enter for every entry, otherwise it will not be saved.\n\nTo save the values to saved pitch list, enter the set number and press save button."))
+
+    # Note Label
+    note_label = Label(set_screen, text="Note: Press enter to save values",font=("Arial",15,"bold")).place(x=20, y=10)
+
 
     DefaultSetEntry.clear_values()
     for item in PURE_NOTES:
@@ -328,15 +339,15 @@ def init_set_screen():
         DefaultSetEntry(item,set_screen)
     
     # Save to label
-    save_label = Label(set_screen, text="Save to",font=("Arial",15,"bold"))
-    save_label.place(x=275, y=175)
+    save_label = Label(set_screen, text="Save to List:",font=("Arial",15,"bold"))
+    save_label.place(x=260, y=180)
     
     # Save to entry
     init_set_screen.save_entry = Entry(set_screen, width=10)
-    init_set_screen.save_entry.place(x=280, y=225)
+    init_set_screen.save_entry.place(x=280, y=220)
 
     # Save button
-    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(),DefaultSetEntry.pitch)).place(x=355, y=225)
+    save_button = Button(set_screen, text="Save", command=lambda: update_pitch_list(init_set_screen.save_entry.get(),DefaultSetEntry.pitch)).place(x=355, y=215)
 
     set_screen.mainloop()
 
@@ -398,10 +409,10 @@ def default_labels():
     global app,global_button_list
     
     # Info label
-    info = Label(app, text="Info", font=("Arial", 15, "bold")).pack()
+    info = Label(app, text="Note Info:", font=("Arial", 15, "bold")).pack()
     
     # Default Sets label
-    sets = Label(app, text="Default Sets",font=("Arial",15,"bold")).place(x=470, y=5)
+    sets = Label(app, text="Saved Pitch\nList",font=("Arial",15,"bold")).place(x=465, y=5)
     
     # Current Pitch label
     pitch_label = Label(app, text="Current Pitch: ",font=("Arial",15,"bold")).place(x=150, y=260)
@@ -412,7 +423,7 @@ def default_labels():
     default_labels.pitch_text.config(state=DISABLED)
 
     # Save values button 
-    save_values = Button(app, text="Save Values", command=lambda: (update_pitch_list(1, NoteButton.pitch))).place(x=250, y=170)
+    save_values = Button(app, text="Save Current", command=lambda: (update_pitch_list(1, NoteButton.pitch))).place(x=250, y=170)
 
     # Text between -10/+10 buttons
     default_labels.current_note = Text(app, width=5, height=1, font=("Arial",12,"bold"))
@@ -431,24 +442,25 @@ def default_labels():
     counter = 0
     for i in range(8):
         if i >= 4:
-            button = Button(app, text=f"{(counter+4)+1}", command=lambda set_number=(counter+4): set_default(set_number),width=3, height=2).place(x=540, y=40+counter*50)
+            button = Button(app, text=f"{(counter+4)+1}", command=lambda set_number=(counter+4): set_default(set_number),width=3, height=2).place(x=540, y=(60)+counter*50)
             counter += 1
         else:
-            button = Button(app, text=f"{i+1}", command=lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=40+i*50)
+            button = Button(app, text=f"{i+1}", command=lambda set_number=(i): set_default(set_number) , width=3, height=2).place(x=480, y=(60)+i*50)
+    del counter
 
     # Setting menu
     app_menu = Menu(app)
     app.config(menu=app_menu)
     about_menu = Menu(app_menu)
     app_menu.add_cascade(label="About", menu=about_menu)
-    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.1.1"))
+    about_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "This is an open-source software GUI program for sending and configuring Midi Signals.\n\nCreated by: Alperen Ağa\n\nVersion: 0.1.2"))
     
     # Information menu
     information_menu = Menu(app_menu)
     app_menu.add_cascade(label="Information", menu=information_menu)
-    information_menu.add_command(label="Information", command=lambda: messagebox.showinfo("Information", "This program requires to send one more midi signal after closing the program because of reading inport method.\n\nIf you cannot send another midi signal after closing program this program keeps running in background.\n\nIf you dont have any tool connected to send midi signal after closing program you can stop the program in task manager which is named 'Midi-Project.exe'"))
+    information_menu.add_command(label="Information", command=lambda: messagebox.showinfo("Information", "This program requires to send one more midi signal after closing the program because of reading inport method.\n\nIf you cannot send another midi signal after closing program this program keeps running in background.\n\nIf you dont have any tool connected to send midi signal after closing program you can stop the program in task manager which is named 'Midi-Project' or 'python'"))
 
-    save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=250)
+    save_new_button = Button(app, text="Save New", command=init_set_screen, width=7, height=1).place(x=495, y=260)
 
 def coming_note(msg):
     """

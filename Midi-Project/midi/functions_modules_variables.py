@@ -40,8 +40,8 @@ def save_json(json_data):
         json_files = [f for f in files if f.endswith('.json')]
         if json_files:
             last_number = int((json_files[-1].split(".")[0])[-1])
-            with open(f"pitch_data{last_number+1}.json", "w") as fp:
+            with open(f"SavedPitch-{last_number+1}.json", "w") as fp:
                 json.dump(json_data, fp, indent=4)
         else:
-            with open(f"pitch_data1.json", "w") as fp:
+            with open(f"SavedPitch-1.json", "w") as fp:
                 json.dump(json_data, fp, indent=4)
