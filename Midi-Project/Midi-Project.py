@@ -530,41 +530,29 @@ def coming_note(msg):
     global current_pitch, global_button_list
 
     if msg.type == 'note_on':
-        if msg.note == 36:
-            # If coming note is C3 (first note), save pitch value
-            for button in global_button_list:
-                if button.get_note_name() == NoteButton.last_pressed_note:
+        for item in global_button_list:
+            # this '-8' can change depending on the instrument
+            note = number_to_note(msg.note - 8)
+            if item.get_note_name() == note[0]:
+                threading.Thread(
+                    target=lambda: item.set_octave(note[1])).start()
+                if current_pitch == 0:
+                    # if current_pitch is 0, use the saved pitch value
+                    threading.Thread(target=lambda: item.set_pitch(
+                        item.get_saved_pitch())).start()
+                else:
+                    # else use the current pitch value
                     threading.Thread(
-                        target=lambda: button.set_saved_pitch(current_pitch)).start()
-                    threading.Thread(
-                        target=lambda: button.change_entry_box(current_pitch)).start()
-                    threading.Thread(
-                        target=lambda: button.update_local_pitch()).start()
-                    break
-        else:
-            for item in global_button_list:
-                # this '-8' can change depending on the instrument
-                note = number_to_note(msg.note - 8)
-                if item.get_note_name() == note[0]:
-                    threading.Thread(
-                        target=lambda: item.set_octave(note[1])).start()
-                    if current_pitch == 0:
-                        # if current_pitch is 0, use the saved pitch value
-                        threading.Thread(target=lambda: item.set_pitch(
-                            item.get_saved_pitch())).start()
-                    else:
-                        # else use the current pitch value
-                        threading.Thread(
-                            target=lambda: item.set_pitch(current_pitch)).start()
-                    threading.Thread(
-                        target=lambda: item.set_octave(note[1])).start()
-                    threading.Thread(
-                        target=lambda: item.send_pitch_wheel()).start()
-                    threading.Thread(
-                        target=lambda: item.set_velocity(msg.velocity)).start()
-                    threading.Thread(
-                        target=lambda: item.send_note_on()).start()
-                    break
+                        target=lambda: item.set_pitch(current_pitch)).start()
+                threading.Thread(
+                    target=lambda: item.set_octave(note[1])).start()
+                threading.Thread(
+                    target=lambda: item.send_pitch_wheel()).start()
+                threading.Thread(
+                    target=lambda: item.set_velocity(msg.velocity)).start()
+                threading.Thread(
+                    target=lambda: item.send_note_on()).start()
+                break
     elif msg.type == 'note_off':
         for item in global_button_list:
             note = number_to_note(msg.note - 8)
